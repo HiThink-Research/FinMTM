@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/fig_overview.png" width="820" />
+  <img src="assets/circle.png" width="820" />
 </p>
 <p align="center"><i>Overview of FinMTM: task types and capability coverage.</i></p>
 
@@ -73,7 +73,7 @@ We construct agentic and dialogue data via a two-stage pipeline:
 2. **Question generation** with difficulty control and constraint-aware prompting to produce diverse multi-turn sessions.
 
 <p align="center">
-  <img src="assets/fig_pipeline.png" width="900" />
+  <img src="assets/agentic-generation.png" width="900" />
 </p>
 <p align="center"><i>Two-stage data synthesis pipeline tailored for financial agent question generation.</i></p>
 
@@ -106,7 +106,7 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 **Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
 
 <p align="center">
-  <img src="assets/fig_results.png" width="900" />
+  <img src="static/Columnar.png" width="900" />
 </p>
 <p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
 

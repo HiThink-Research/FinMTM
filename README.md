@@ -57,10 +57,13 @@ Financial reasoning is challenging for VLMs due to specialized chart formats, de
 - Tool planning, tool invocation correctness, evidence-grounded summarization.
 
 ---
+**Multi-stage data construction** 
+
+Beyond task design, we propose a novel multi-stage data construction pipeline to systematically scale multi-turn financial sessions—from visual-grounded primitives, to compositional multi-step dialogues, and further to tool-augmented agentic workflows—ensuring that each session is intentionally aligned with targeted cognitive requirements and remains traceable to verifiable evidence.
 
 ![Fig. X. Multi-stage construction pipeline of FinMTM.](static/agentic-generation.png)
 
-**Fig. X.** Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
+Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
 
 ## 📊 Results
 We benchmark a range of leading VLMs on FinMTM. The final score is the average across:

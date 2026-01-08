@@ -58,6 +58,10 @@ Financial reasoning is challenging for VLMs due to specialized chart formats, de
 
 ---
 
+![Fig. X. Multi-stage construction pipeline of FinMTM.](static/agentic-generation.png)
+
+**Fig. X.** Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
+
 ## 📊 Results
 We benchmark a range of leading VLMs on FinMTM. The final score is the average across:
 **Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.

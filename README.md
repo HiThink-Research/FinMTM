@@ -13,7 +13,7 @@
   objective questions, open-ended dialogues, and agent-based tasks with tool-use and multi-source evidence.
 </p>
 <p align="center">
-  <img src="static/circle.png" width="320" />
+  <img src="static/main2.png" hetight="320" />
 </p>
 <p align="center"><i>Overview of FinMTM: task types and capability coverage.</i></p>
 
@@ -61,7 +61,7 @@ Financial reasoning is challenging for VLMs due to specialized chart formats, de
 
 Beyond task design, we propose a novel multi-stage data construction pipeline to systematically scale multi-turn financial sessions—from visual-grounded primitives, to compositional multi-step dialogues, and further to tool-augmented agentic workflows—ensuring that each session is intentionally aligned with targeted cognitive requirements and remains traceable to verifiable evidence.
 
-![Fig. X. Multi-stage construction pipeline of FinMTM.](static/agentic-generation.png)
+![Fig. X. Multi-stage construction pipeline of FinMTM.](static/agentic.png)
 
 Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
 

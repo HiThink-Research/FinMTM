@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/circle.png" width="820" />
+  <img src="static/circle.png" width="820" />
 </p>
 <p align="center"><i>Overview of FinMTM: task types and capability coverage.</i></p>
 
@@ -73,7 +73,7 @@ We construct agentic and dialogue data via a two-stage pipeline:
 2. **Question generation** with difficulty control and constraint-aware prompting to produce diverse multi-turn sessions.
 
 <p align="center">
-  <img src="assets/agentic-generation.png" width="900" />
+  <img src="static/agentic-generation.png" width="900" />
 </p>
 <p align="center"><i>Two-stage data synthesis pipeline tailored for financial agent question generation.</i></p>
 

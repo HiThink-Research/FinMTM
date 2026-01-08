@@ -12,9 +12,8 @@
   <b>FinMTM</b> is a multi-turn multimodal benchmark that evaluates financial VLMs under three settings:
   objective questions, open-ended dialogues, and agent-based tasks with tool-use and multi-source evidence.
 </p>
-
 <p align="center">
-  <img src="static/circle.png" width="820" />
+  <img src="static/circle.png" width="320" />
 </p>
 <p align="center"><i>Overview of FinMTM: task types and capability coverage.</i></p>
 
@@ -29,10 +28,8 @@
 
 ## 📌 Contents
 - [Overview](#-overview)
-- [Benchmark Design](#-benchmark-design)
-- [Data Synthesis Pipeline](#-data-synthesis-pipeline)
-- [Evaluation](#-evaluation)
 - [Results](#-results)
+- [Evaluation](#-evaluation)
 - [Leaderboard Submission](#-leaderboard-submission)
 - [Dataset Access](#-dataset-access)
 - [Quickstart](#-quickstart)
@@ -43,41 +40,41 @@
 ---
 
 ## 🧭 Overview
-Financial reasoning is challenging for VLMs due to specialized chart formats, dense domain knowledge, long-horizon dependencies, and evidence-grounded tool use.
-Existing benchmarks are mostly single-turn and do not sufficiently measure **multi-turn dialogue stability**, **session-level memory**, or **agentic planning and execution**.
+Financial reasoning is challenging for VLMs due to specialized chart formats, dense domain knowledge, long-horizon dependencies, and evidence-grounded tool use. Existing benchmarks are mostly single-turn and do not sufficiently measure **multi-turn dialogue stability**, **session-level memory**, or **agentic planning and execution**.
 
 **FinMTM** addresses this gap by providing:
 - **Objective questions**: single-/multiple-choice tasks grounded in financial visuals.
-- **Open-ended**: multi-turn conversations that stress compositional reasoning, multi-step calculation, self-correction, and memory.
-- **Financial agent tasks**: tool-augmented multi-source workflows with long-horizon planning and evidence-grounded answers.
+
+- **Open-ended questions**: multi-turn conversations that stress compositional reasoning, multi-step calculation, self-correction, and memory.
+
+- **Financial agent task**: tool-augmented multi-source workflows with long-horizon planning and evidence-grounded answers.
+
+  
+
+**Capability Axes (examples)**
+
+- Chart/figure understanding, numerical reasoning, entity binding, cross-turn consistency, memory recall.
+- Tool planning, tool invocation correctness, evidence-grounded summarization.
 
 ---
 
-## 🧩 Benchmark Design
-FinMTM spans progressive cognitive demands from low-level perception to long-term memory and agentic execution.
-
-**Task settings**
-- **Objective Questions**: Single-choice / Multi-choice
-- **Open-Ended Dialogues**: Compositional understanding, logical calculation, self-correction, memory
-- **Financial Agent**: tool-use orchestration + multi-source evidence + long-horizon planning
-
-**Capability axes (examples)**
-- chart/figure understanding, numerical reasoning, entity binding, cross-turn consistency, memory recall,
-- tool planning, tool invocation correctness, evidence-grounded summarization.
-
----
-
-## 🏗️ Data Synthesis Pipeline
-We construct agentic and dialogue data via a two-stage pipeline:
-1. **Factual foundation generation** from multi-source financial signals (charts, tables, reports, news, etc.).
-2. **Question generation** with difficulty control and constraint-aware prompting to produce diverse multi-turn sessions.
+## 📊 Results
+We benchmark a range of leading VLMs on FinMTM. The final score is the average across:
+**Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
 
 <p align="center">
-  <img src="static/agentic-generation.png" width="900" />
+  <img src="static/Columnar.png" width="900" />
 </p>
-<p align="center"><i>Two-stage data synthesis pipeline tailored for financial agent question generation.</i></p>
+<p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
+
+**Key observations**
+
+- Agentic settings expose larger gaps than pure reasoning-only settings.
+- Entity de-identification / fuzzing increases uncertainty and stresses evidence-grounded reasoning.
+- Scaling helps, but robust tool planning and execution remain a major bottleneck for open-source models.
 
 ---
+
 
 ## 📏 Evaluation
 FinMTM uses task-aware evaluation protocols across the three settings.
@@ -101,21 +98,7 @@ We evaluate:
 
 ---
 
-## 📊 Results
-We benchmark a range of leading VLMs on FinMTM. The final score is the average across:
-**Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
 
-<p align="center">
-  <img src="static/Columnar.png" width="900" />
-</p>
-<p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
-
-**Key observations**
-- Agentic settings expose larger gaps than pure reasoning-only settings.
-- Entity de-identification / fuzzing increases uncertainty and stresses evidence-grounded reasoning.
-- Scaling helps, but robust tool planning and execution remain a major bottleneck for open-source models.
-
----
 
 ## 🏁 Leaderboard Submission
 We welcome submissions to the online leaderboard.

@@ -11,6 +11,8 @@ from judge.session_judge import (
     judge_session_behavior,
     judge_session_v2,
     judge_session_multiview,
+    judge_session_logic_reasoning,
+    judge_session_L1
 )
 import config
 
@@ -24,7 +26,7 @@ def detect_multiview(task_type_hint: str, image_paths):
     )
 
 
-async def evaluate_sample(sample, eval_client):
+async def evaluate_sample(sample, eval_client,task):
     turns = sample.get("turns", [])
     image_paths = sample.get("image_paths") or sample.get("image_path")
     image_paths = image_paths if isinstance(image_paths, list) else [image_paths]
@@ -69,11 +71,15 @@ async def evaluate_sample(sample, eval_client):
         else:
             final_score = (avg_turn_score * 0.4) + (session_score * 0.6)
 
-    else:
-        session_eval_res = await judge_session_v2(eval_client, sample, image_paths)
+    elif task=="L1":
+        session_eval_res = await judge_session_L1(eval_client, sample, image_paths)
         session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
         final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
-
+    elif task=="L2":
+        session_eval_res = await judge_session_logic_reasoning(eval_client, sample, image_paths)
+        session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
+        final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
+        
     # --- 3) fallback（理论上不会走到） ---
     if final_score is None:
         final_score = (avg_turn_score * config.WEIGHT_TURN) + (session_score * config.WEIGHT_SESSION)
@@ -89,16 +95,31 @@ async def evaluate_sample(sample, eval_client):
         "session_details": session_eval_res,
     }
 
+import os
+import re
+
+def level_from_input_path(input_path: str) -> str:
+    """
+    从输入文件名提取 L1-L4。
+    例如：.../L1_with_id_vlm.jsonl -> L1
+         .../abc_L2__with_id_vlm.jsonl -> L2
+    """
+    fname = os.path.basename(input_path).upper()
+    m = re.search(r"\bL[1-4]\b", fname)
+    if not m:
+        raise ValueError(f"无法从文件名解析 L1-L4: {fname}")
+    return m.group(0)
 
 async def run_file(input_path, output_path, eval_client):
     samples = load_jsonl(input_path)
+    task=level_from_input_path(input_path)
     print(f"📂 Load {len(samples)} samples from {input_path}")
     ensure_dir(output_path)
 
     with open(output_path, "a", encoding="utf-8") as fout:
         for sample in tqdm(samples, desc=f"🚀 Evaluating {input_path}"):
             try:
-                result = await evaluate_sample(sample, eval_client)
+                result = await evaluate_sample(sample, eval_client,task)
                 fout.write(json.dumps(result, ensure_ascii=False) + "\n")
                 fout.flush()
             except Exception as e:

@@ -1,0 +1,109 @@
+
+【项目用途】
+eval_runner 是一个“批量评测/打分”工具：
+- 在指定目录中自动查找符合规则的 JSONL 输入文件（默认：L*_with_id_vlm.jsonl）
+- 调用指定评测客户端（qwen / gemini）对每条样本（session）进行评测
+- 输出对应的 *_score.jsonl 到输出子目录，便于后续统计分析
+
+【核心入口】
+- eval_runner/main.py
+
+它做的事：
+1) 解析命令行参数
+2) 遍历 --dirs 指定的目录
+3) 使用 glob 模式 --pattern 搜索输入文件（默认 L*_with_id_vlm.jsonl）
+4) 在目录内创建输出子目录 --out_subdir（默认来自 config.DEFAULT_OUT_SUBDIR）
+5) 对每个输入文件调用 evaluator.run_file(inp, outp, client) 生成评分文件
+
+【输入文件约定】
+- 输入是 JSONL：每一行是一个 JSON 对象（一个 session）
+- 默认文件命名：L*_with_id_vlm.jsonl
+  例如：
+    L1_with_id_vlm.jsonl
+    L2_with_id_vlm.jsonl
+
+输入字段由 evaluator.run_file() 决定，通常至少包含：
+- session_id（或其它可唯一标识 session 的字段）
+- image_path（图片路径或 URL）
+- turns（多轮对话内容，如 T1~T4）
+- 以及待评测的模型输出字段（例如 model_answer/vlm_output 等）
+
+示例（仅示意）：
+{
+  "session_id": "L1_000123",
+  "image_path": "/path/to/image.png",
+  "turns": [
+    {"turn_id":"T1","question":"...","gold_answer":"...","vars_out":{...}},
+    {"turn_id":"T2","question":"...","gold_answer":"...","vars_out":{...}},
+    {"turn_id":"T3","question":"...","gold_answer":"...","vars_out":{...}},
+    {"turn_id":"T4","question":"...","gold_answer":"...","vars_out":{...}}
+  ],
+  "model_answer": {
+    "T1":"...",
+    "T2":"...",
+    "T3":"...",
+    "T4":"..."
+  }
+}
+
+【输出文件约定】
+- 输出目录：<base_dir>/<out_subdir>/
+- 输出文件名：把输入文件名中的 _with_id_vlm.jsonl 替换成 _score.jsonl
+
+例如：
+- 输入：/data/L1_with_id_vlm.jsonl
+- 输出：/data/<out_subdir>/L1_score.jsonl
+
+输出 JSONL 每行对应一个输入 session 的评测结果（字段取决于 evaluator 实现），推荐包含：
+- session_id
+- score（分数）
+- pass（是否通过）
+- deductions（扣分项列表）
+- critique（文本点评，可选）
+
+示例（仅示意）：
+{
+  "session_id":"L1_000123",
+  "score":92,
+  "pass":true,
+  "deductions":[
+    {"item":"最小定义不充分","detail":"T3 未重述对象最小定义","penalty":-8}
+  ]
+}
+
+【运行方式（示例）】
+1) 评测一个目录（用默认 pattern/out_subdir/client 等）
+python -m eval_runner.main --dirs /path/to/data
+
+2) 指定 glob pattern
+python -m eval_runner.main --dirs /path/to/data --pattern "L*_with_id_vlm.jsonl"
+
+3) 指定输出子目录
+python -m eval_runner.main --dirs /path/to/data --out_subdir score_out
+
+4) 指定客户端（Qwen）
+python -m eval_runner.main --dirs /path/to/data --client qwen --api_base http://127.0.0.1:8000/v1 --model Qwen3-VL-30B-A3B-Instruct
+
+5) 指定客户端（Gemini）
+python -m eval_runner.main --dirs /path/to/data --client gemini
+
+【命令行参数说明（来自 main.py）】
+--dirs       输入目录列表（空格分隔），默认 config.DEFAULT_DIRS
+--pattern    glob 匹配模式，默认 config.DEFAULT_PATTERN
+--out_subdir 输出子目录名，默认 config.DEFAULT_OUT_SUBDIR
+--client     评测客户端：qwen 或 gemini
+--api_base   Qwen API base（仅 qwen 客户端用）
+--model      Qwen served model name（仅 qwen 客户端用）
+
+【注意事项 / 常见坑】
+- main.py 对每个输入文件使用 asyncio.run(run_file(...))：
+  不适合在已有事件循环环境里嵌套调用（例如某些 notebook/服务框架）。
+- 输出目录创建通过 ensure_dir(os.path.join(out_dir, "dummy.txt"))：
+  ensure_dir() 需要能处理“文件路径”并创建其父目录。
+- qwen 客户端需确保 api_base 可访问且模型名与服务端一致。
+- evaluator.run_file() 负责实际评测逻辑与输出字段，README 的字段示例仅作参考。
+
+==========================
+README 结束
+==========================
+*/

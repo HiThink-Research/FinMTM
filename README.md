@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="PAPER_URL"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
+  <a href="https://bbdjj.github.io/FinMTM.github-io/"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
   <a href="ARXIV_URL"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b"></a>
   <a href="HF_DATASET_URL"><img src="https://img.shields.io/badge/Dataset-HuggingFace-yellow"></a>
   <a href="LEADERBOARD_URL"><img src="https://img.shields.io/badge/Leaderboard-Online-blue"></a>

@@ -10,13 +10,13 @@
   📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href=""https://bbdjj.github.io/FinMTM.github-io/">Homepage</a>
 </p>
 
-<p align="center">
+<!-- <p align="center">
   <a href="https://bbdjj.github.io/FinMTM.github-io/"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
   <a href="ARXIV_URL"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b"></a>
   <a href="HF_DATASET_URL"><img src="https://img.shields.io/badge/Dataset-HuggingFace-yellow"></a>
   <a href="LEADERBOARD_URL"><img src="https://img.shields.io/badge/Leaderboard-Online-blue"></a>
   <a href="LICENSE_URL"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
-</p>
+</p> -->
 
 <!-- <p align="center">
   <b>FinMTM</b> is a multi-turn multimodal benchmark that evaluates financial VLMs under three settings:

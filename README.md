@@ -85,6 +85,45 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 </p>
 <p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
 
+
+### Benchmark Results
+
+**Columns**
+- **Objective Questions**: Single, Multi  
+- **Open-Ended Ques.**: Com., Cal., SelfCorr., Mem.  
+- **Financial Agent**: w fuzz, w/o fuzz  
+
+| Method | Obj-Single | Obj-Multi | Open-Com. | Open-Cal. | Open-SelfCorr. | Open-Mem. | Agent-w fuzz | Agent-w/o fuzz |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| _Proprietary Models_ |||||||||
+| ChatGPT-4o | 79.3 | 49.1 | 77.2 | 76.8 | 46.2 | 38.9 | 29.7 | 34.8 |
+| ChatGPT-o3* | 85.8 | 73.3 | 83.8 | 78.6 | 52.8 | 43.6 | 31.4 | 35.2 |
+| ChatGPT-5* | 89.0 | **79.6** | <u>86.9</u> | <u>80.7</u> | <u>56.9</u> | <u>46.7</u> | 35.9 | 49.7 |
+| Gemini 3 Flash | <u>91.9</u> | 78.1 | 82.2 | 76.0 | 55.4 | 41.6 | **53.6** | **62.6** |
+| Grok-4-fast-non-reasoning* | 71.0 | 46.8 | 66.0 | 61.2 | 39.9 | 24.8 | 30.2 | 39.7 |
+| Gemini 3 Pro | **92.1** | <u>78.4</u> | **87.5** | **82.8** | **58.8** | **48.5** | <u>48.3</u> | <u>54.3</u> |
+| _InternVL Series_ |||||||||
+| InternVL2.5-8B | 63.8 | 25.7 | 55.1 | 49.2 | 26.5 | 16.7 | 8.4 | 10.5 |
+| InternVL2.5-26B | 70.5 | 31.3 | 61.7 | 57.7 | 32.3 | 22.8 | 11.2 | 14.0 |
+| InternVL2.5-40B | 72.3 | 35.2 | 66.1 | 64.6 | 36.2 | 26.7 | 13.5 | 16.8 |
+| InternVL3-78B | 75.6 | 42.4 | 76.2 | 77.6 | 43.6 | 32.6 | 18.2 | 22.8 |
+| _Other VL Series_ |||||||||
+| MiMo-VL-7B | 61.1 | 21.4 | 75.1 | 75.4 | 47.2 | 39.9 | 20.2 | 25.5 |
+| GLM4.5V-108B | 73.7 | 51.0 | 85.4 | 79.6 | 51.1 | 42.2 | 26.5 | 32.4 |
+| _Qwen VL Series_ |||||||||
+| Qwen2.5-VL-3B | 64.5 | 16.4 | 68.2 | 67.7 | 40.5 | 27.6 | 9.4 | 11.9 |
+| Qwen2.5-VL-7B | 73.4 | 24.1 | 74.3 | 73.4 | 43.1 | 33.9 | 11.1 | 14.2 |
+| Qwen3-VL-4B-Instruct | 73.3 | 34.2 | 74.5 | 71.2 | 39.5 | 25.9 | 15.1 | 19.1 |
+| Qwen3-VL-4B-Thinking | 66.1 | 24.3 | 71.2 | 68.5 | 42.5 | 31.0 | 12.8 | 15.6 |
+| Qwen3-VL-30B-A3B-Instruct | 77.2 | 47.3 | 82.1 | 76.5 | 42.5 | 33.7 | 16.2 | 20.8 |
+| Qwen3-VL-30B-A3B-Thinking | 71.5 | 49.4 | 80.7 | 67.1 | 44.2 | 35.1 | 18.9 | 23.3 |
+| Qwen3-VL-32B-Instruct | 84.5 | 39.9 | 84.3 | 80.7 | 50.8 | 40.3 | 19.6 | 25.1 |
+| Qwen3-VL-32B-Thinking | 83.4 | 46.5 | 80.3 | 68.6 | 43.5 | 33.7 | 23.2 | 28.6 |
+| Qwen3-VL-235B-A22B-Instruct | 81.3 | 48.5 | 85.5 | 80.9 | 54.5 | 41.5 | 32.1 | 38.7 |
+| Qwen3-VL-235B-A22B-Thinking | 80.5 | 42.3 | 84.5 | 79.4 | 52.5 | 43.0 | 35.2 | 41.5 |
+
+
+
 **Key observations**
 
 - Agentic settings expose larger gaps than pure reasoning-only settings.

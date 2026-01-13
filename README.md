@@ -5,6 +5,17 @@
     FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation
   </h1>
 </p>
+  <p align="center">
+       <strong>Chenxi Zhang</strong>
+    ,
+    <strong>Ziliang Gan</strong>
+    ,
+    <strong>Liyun Zhu</strong>
+    ,
+    <strong>Qing Zhang</strong>
+    ,
+     <strong>Rongjunchen Zhang</strong><sup>♠</sup>,
+  </p>
 
 <p align="center">
   📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href=""https://bbdjj.github.io/FinMTM.github-io/">Homepage</a>

@@ -22,7 +22,7 @@
   <b>FinMTM</b> is a multi-turn multimodal benchmark that evaluates financial VLMs under three settings:
   objective questions, open-ended dialogues, and agent-based tasks with tool-use and multi-source evidence.
 </p> -->
-
+<br>
 <p align="center">
   <img src="static/main2.png" hetight="320" />
 </p>

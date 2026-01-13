@@ -81,7 +81,7 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 **Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
 
 <p align="center">
-  <img src="static/Columnar.png" width="900" />
+  <img src="static/e1b91bdd-de1b-45eb-9dac-19a42f6f66f3.png" width="900" />
 </p>
 <p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
 

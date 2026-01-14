@@ -18,7 +18,7 @@
   </p>
 
 <p align="center">
-  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">Homepage</a>
+  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">Homepage</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">Huggingface</a>
 </p>
 
 <!-- <p align="center">

@@ -3,13 +3,6 @@ from openai import OpenAI
 import traceback
 
 class Qwen3VLClient:
-    """
-    通用 Qwen3-VL 客户端
-    - 支持多图输入（image 可以是 str 或 list[str]）
-    - 支持多轮对话（messages 累积上下文）
-    - 自动转 Base64
-    - 与 OpenAI ChatCompletion 接口完全兼容
-    """
 
     def __init__(self, api_base="http://localhost:8000/v1",
                  model="Qwen3-VL-30B-A3B-Instruct",
@@ -138,7 +131,7 @@ class Qwen3VLClient:
         print(answer)
         # self.messages.append({"role": "assistant", "content": [{"type": "text", "text": answer}]})
         return answer
-    # ============ [新增] 获取 Embedding ============
+
     def get_embedding(self, text, max_tokens=18000, temperature=0.2):
         """
         调用 embeddings 接口获取向量
@@ -164,3 +157,4 @@ class Qwen3VLClient:
     def clear(self):
         """清空上下文"""
         self.messages = []
+

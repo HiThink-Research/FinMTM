@@ -167,29 +167,6 @@ We evaluate:
 ---
 
 
-
-## 🏁 Leaderboard Submission
-We welcome submissions to the online leaderboard.
-
-**Submission includes**
-- model name & version
-- inference configuration (decoding, temperature, max tokens, etc.)
-- outputs in the required JSON format
-- optional system prompt / reasoning prompt (if permitted)
-
-👉 See: `LEADERBOARD_URL` (coming soon)
-
----
-
-## 📦 Dataset Access
-- **HuggingFace**: `HF_DATASET_URL`
-- **License / Terms**: check dataset card and paper appendix.
-- If some data sources have redistribution constraints, we provide:
-  - processed metadata and evaluation splits
-  - script-based re-creation instructions where applicable
-
----
-
 ## ⚡ Quickstart
 
 ### Installation

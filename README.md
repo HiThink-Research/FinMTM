@@ -180,6 +180,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 ### Inference
+
+Start vLLM → wait for the port to be listening → wait until /v1/models is ready → run val.py → stop vLLM → cooldown.
 For objective questions
 ```bash
 cd ./inference/SC_MC

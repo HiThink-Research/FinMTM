@@ -17,7 +17,7 @@ OUTPUT_DIR = os.path.join(INPUT_DIR, VLLM_MODEL_NAME)
 PORT=9000
 api_base = f"http://localhost:{PORT}/v1"
 if __name__ == "__main__":
-    input_jsonl = "/cpfs01/HithinkOmniSSD/user_workspace/ganziliang/code/omini/OQ/output.jsonl"
+    SC_input_jsonl = "./OQ/output.jsonl"
 #评测单选题
     evaluate_jsonl_with_accuracy(
         input_jsonl=input_jsonl,
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         model=MODEL_NAME
     )
 #评测多选题
-    input_jsonl = "/cpfs01/HithinkOmniSSD/user_workspace/ganziliang/code/omini/OQ/output_wrong_multi.jsonl"
+    MC_input_jsonl = "./OQ/output_wrong_multi.jsonl"
     evaluate_jsonl_with_accuracy(
         input_jsonl=input_jsonl,
         output_jsonl=os.path.join(OUTPUT_DIR,"eval_results_m.jsonl"),
@@ -35,3 +35,4 @@ if __name__ == "__main__":
         api_base=api_base,
         model=MODEL_NAME,
     )
+

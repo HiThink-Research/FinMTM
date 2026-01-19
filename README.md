@@ -6,19 +6,27 @@
   </h1>
 </p>
   <p align="center">
-       <strong>Chenxi Zhang</strong>
+       <strong>Chenxi Zhang</strong><sup>1,2*</sup>
     ,
-    <strong>Ziliang Gan</strong>
+    <strong>Ziliang Gan</strong><sup>1,3*</sup>
     ,
-    <strong>Liyun Zhu</strong>
+    <strong>Liyun Zhu</strong><sup>1*</sup>
     ,
-    <strong>Qing Zhang</strong>
+    <strong>Youwei Pang</strong><sup>4</sup>
     ,
-     <strong>Rongjunchen Zhang</strong><sup>♠</sup>,
+    <strong>Qing Zhang</strong><sup>5</sup>
+    ,
+     <strong>Rongjunchen Zhang</strong><sup>1 ♠</sup>
   </p>
 
 <p align="center">
-  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">Homepage</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">Huggingface</a>
+  <sup>1</sup> HiThink Research &emsp; <sup>2</sup>Wuhan University &emsp; <sup>3</sup>Zhejiang University &emsp; <sup>4</sup> Nanyang Technological University &emsp; <sup>5</sup>Shanghai Institute of Technology &emsp; <br>
+  <sub><sup>*</sup>Equal Contribution &emsp; <sup>♠</sup>Corresponding Author &emsp;</sub> <br>
+  </sup>Correspondence: zhangrongjunchen@myhexin.com <sup>
+</p>
+
+<p align="center">
+  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">Project Page</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">Huggingface</a>
 </p>
 
 <!-- <p align="center">
@@ -52,12 +60,9 @@
 - [Overview](#-overview)
 - [Results](#-results)
 - [Evaluation](#-evaluation)
-- [Leaderboard Submission](#-leaderboard-submission)
-- [Dataset Access](#-dataset-access)
 - [Quickstart](#-quickstart)
-- [Citation](#-citation)
 - [License](#-license)
-- [Contact](#-contact)
+- [Citation](#-citation)
 
 ---
 
@@ -65,25 +70,21 @@
 Financial reasoning is challenging for VLMs due to specialized chart formats, dense domain knowledge, long-horizon dependencies, and evidence-grounded tool use. Existing benchmarks are mostly single-turn and do not sufficiently measure **multi-turn dialogue stability**, **session-level memory**, or **agentic planning and execution**.
 
 **FinMTM** addresses this gap by providing:
-- **Objective questions**: single-/multiple-choice tasks grounded in financial visuals.
+- **Objective questions**: single and multiple choice questions grounded in financial visuals.
 
 - **Open-ended questions**: multi-turn conversations that stress compositional reasoning, multi-step calculation, self-correction, and memory.
 
 - **Financial agent task**: tool-augmented multi-source workflows with long-horizon planning and evidence-grounded answers.
 
-  
-
-**Capability Axes (examples)**
-
-- Chart/figure understanding, numerical reasoning, entity binding, cross-turn consistency, memory recall.
-- Tool planning, tool invocation correctness, evidence-grounded summarization.
 
 ---
 **Multi-stage data construction** 
 
-Beyond task design, we propose a novel multi-stage data construction pipeline to systematically scale multi-turn financial sessions—from visual-grounded primitives, to compositional multi-step dialogues, and further to tool-augmented agentic workflows—ensuring that each session is intentionally aligned with targeted cognitive requirements and remains traceable to verifiable evidence.
+We propose a novel multi-stage data construction pipeline to scale multi-turn financial sessions, ensuring alignment with targeted cognitive requirements and traceability to verifiable evidence.
 
-![Fig. X. Multi-stage construction pipeline of FinMTM.](static/12d206da-5383-4200-9290-d43333931b24.png)
+<p align="center">
+<img src="static/12d206da-5383-4200-9290-d43333931b24.png" alt="Fig. X. Multi-stage construction pipeline of FinMTM." style="zoom: 33%;" />
+</p>
 
 Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
 
@@ -99,10 +100,16 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 
 ### Benchmark Results
 
-**Columns**
-- **Objective Questions**: Single, Multi  
-- **Open-Ended Ques.**: Com., Cal., SelfCorr., Mem.  
-- **Financial Agent**: w fuzz, w/o fuzz  
+
+<details>
+  <summary> Benchmark Results (Click to Expand)</summary>
+
+  <br>
+
+**Column Definitions**
+- **Objective Questions:** Single-choice (Obj-Single), Multiple-choice (Obj-Multi)
+- **Open-Ended Questions:** Comprehension (Open-Com.), Calculation (Open-Cal.), Self-Correlation (Open-SelfCorr.), Memory (Open-Mem.)
+- **Financial Agent Tasks:** With fuzzing (Agent-w fuzz), Without fuzzing (Agent-w/o fuzz)
 
 | Method | Obj-Single | Obj-Multi | Open-Com. | Open-Cal. | Open-SelfCorr. | Open-Mem. | Agent-w fuzz | Agent-w/o fuzz |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -133,10 +140,9 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 | Qwen3-VL-235B-A22B-Instruct | 81.3 | 48.5 | 85.5 | 80.9 | 54.5 | 41.5 | 32.1 | 38.7 |
 | Qwen3-VL-235B-A22B-Thinking | 80.5 | 42.3 | 84.5 | 79.4 | 52.5 | 43.0 | 35.2 | 41.5 |
 
+</details>
 
-
-**Key observations**
-
+#### 💡 Key Observations
 - Agentic settings expose larger gaps than pure reasoning-only settings.
 - Entity de-identification / fuzzing increases uncertainty and stresses evidence-grounded reasoning.
 - Scaling helps, but robust tool planning and execution remain a major bottleneck for open-source models.
@@ -169,51 +175,69 @@ We evaluate:
 
 ## ⚡ Quickstart
 
-### Installation
+### 1. Environment Setup
 
-For objective questions
+Download the dataset from the [huggingface](https://huggingface.co/datasets/HiThink-Research/FinMTM) link. For evaluation, run the following commands to set up the environment:
 ```bash
-git clone PROJECT_URL
 cd finmtm
-python -m venv .venv
-source .venv/bin/activate
+conda create -n finmtm_env python=3.10 -y
+conda activate finmtm_env
 pip install -r requirements.txt
 ```
-### Inference
 
-Start vLLM → wait for the port to be listening → wait until /v1/models is ready → run val.py → stop vLLM → cooldown.
-For objective questions
+### 2. Inference
+#### 2.1 Inference for Objective Questions (Single/Multiple Choice)
 ```bash
 cd ./inference/SC_MC
 chmod +x etest.sh
 ./etest.sh
-
 ```
-For muti-turns questions
+#### 2.2 Inference for Multi-Turn QA
 ```bash
 cd ./inference/MTQA
 chmod +x etest.sh
 ./etest.sh
-
 ```
-
+#### 2.3 General Inference Command (Optional)
+To customize inference parameters, run the command below directly:
 ```bash
-  python inference.py \
-    --backend qwen3vl \
-    --api-base http://localhost:8000/v1 \
-    --model qwen3vl-4b-instruct \
-    --input-dir ./inputs \
-    --output-dir ./outputs \
-    --include "*.jsonl"
+python inference.py \
+  --backend qwen3vl \
+  --api-base http://localhost:8000/v1 \
+  --model qwen3vl-4b-instruct \
+  --input-dir ./inputs \
+  --output-dir ./outputs \
+  --include "*.jsonl"
 ```
-### Eval
+### 3. Evaluation
 
-For muti-turns questions
+For results of multi-turn QA tasks, run the following commands to start evaluation:
+```bash
+python -m eval_runner.main \
+  --dirs /path/to/data \            # Directory of data to evaluate
+  --client qwen \                   # Client type
+  --api_base http://127.0.0.1:8000/v1 \  # API service address
+  --model Qwen3-VL-30B-A3B-Instruct  # Model used for evaluation
+
+# Alternatively, run via the script (optional)
+chmod +x etest.sh
+./etest.sh
 ```
-python -m eval_runner.main --dirs /path/to/data --client qwen --api_base http://127.0.0.1:8000/v1 --model Qwen3-VL-30B-A3B-Instruct
 
---dirs       输入目录列表（空格分隔），推理结果，默认 config.DEFAULT_DIRS
---pattern    glob 匹配模式，默认 config.DEFAULT_PATTERN
---out_subdir 输出子目录名，默认 config.DEFAULT_OUT_SUBDIR
---client     judge模型客户端：chatgpt 或 gemini
+## 📄 License
+
+![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg) ![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg) 
+
+**Usage and License Notices**: The data and code are intended and licensed for research use only.
+License: Attribution-NonCommercial 4.0 International It should abide by the policy of OpenAI: https://openai.com/policies/terms-of-use .
+
+
+
+## 📚 Citation
+If you find our work useful, please consider citing:
+
+```bibtex
+@article{
+  Coming Soon!
+}
 ```

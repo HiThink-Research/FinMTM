@@ -188,7 +188,9 @@ MODEL_PATHS=(
 )
 SC_input_jsonl = "./OQ/output.jsonl"
 MC_input_jsonl = "./OQ/output_wrong_multi.jsonl"
-python etest.sh
+chmod +x etest.sh
+./etest.sh
+
 ```
 For muti-turns questions
 ```bash
@@ -199,7 +201,9 @@ MODEL_PATHS=(
   "/model/qwen3vl4B_TK"
   "/model/qwen3vl8B_TK"
 )
-python etest.sh
+chmod +x etest.sh
+./etest.sh
+
 ```
 
 ```bash
@@ -223,5 +227,7 @@ python -m eval_runner.main --dirs /path/to/data --client qwen --api_base http://
 --client     评测客户端：qwen 或 gemini
 --api_base   Qwen API base（仅 qwen 客户端用）
 --model      Qwen served model name（仅 qwen 客户端用）
-python etest.sh
+chmod +x etest.sh
+./etest.sh
+
 ```

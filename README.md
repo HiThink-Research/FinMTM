@@ -210,13 +210,8 @@ For muti-turns questions
 ```
 python -m eval_runner.main --dirs /path/to/data --client qwen --api_base http://127.0.0.1:8000/v1 --model Qwen3-VL-30B-A3B-Instruct
 
---dirs       输入目录列表（空格分隔），默认 config.DEFAULT_DIRS
+--dirs       输入目录列表（空格分隔），推理结果，默认 config.DEFAULT_DIRS
 --pattern    glob 匹配模式，默认 config.DEFAULT_PATTERN
 --out_subdir 输出子目录名，默认 config.DEFAULT_OUT_SUBDIR
---client     评测客户端：qwen 或 gemini
---api_base   Qwen API base（仅 qwen 客户端用）
---model      Qwen served model name（仅 qwen 客户端用）
-chmod +x etest.sh
-./etest.sh
-
+--client     judge模型客户端：chatgpt 或 gemini
 ```

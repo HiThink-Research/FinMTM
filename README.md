@@ -170,9 +170,58 @@ We evaluate:
 ## ⚡ Quickstart
 
 ### Installation
+
+For objective questions
 ```bash
 git clone PROJECT_URL
 cd finmtm
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+### Inference
+For objective questions
+```bash
+cd ./inference/SC_MC
+MODEL_PATHS=(
+  "/cpfs01/NLP/models/Qwen3-VL-30B-A3B-Instruct"
+)
+SC_input_jsonl = "./OQ/output.jsonl"
+MC_input_jsonl = "./OQ/output_wrong_multi.jsonl"
+python etest.sh
+```
+For muti-turns questions
+```bash
+cd ./inference/MTQA
+MODEL_PATHS=(
+  "/model/qwen3vl4B_IS"
+  "/model/qwen3vl8B_IS"
+  "/model/qwen3vl4B_TK"
+  "/model/qwen3vl8B_TK"
+)
+python etest.sh
+```
+
+```bash
+  python inference.py \
+    --backend qwen3vl \
+    --api-base http://localhost:8000/v1 \
+    --model qwen3vl-4b-instruct \
+    --input-dir ./inputs \
+    --output-dir ./outputs \
+    --include "*.jsonl"
+```
+### Eval
+
+For muti-turns questions
+```
+python -m eval_runner.main --dirs /path/to/data --client qwen --api_base http://127.0.0.1:8000/v1 --model Qwen3-VL-30B-A3B-Instruct
+
+--dirs       输入目录列表（空格分隔），默认 config.DEFAULT_DIRS
+--pattern    glob 匹配模式，默认 config.DEFAULT_PATTERN
+--out_subdir 输出子目录名，默认 config.DEFAULT_OUT_SUBDIR
+--client     评测客户端：qwen 或 gemini
+--api_base   Qwen API base（仅 qwen 客户端用）
+--model      Qwen served model name（仅 qwen 客户端用）
+python etest.sh
+```

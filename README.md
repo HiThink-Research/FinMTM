@@ -26,9 +26,8 @@
 </p>
 
 <p align="center">
-  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">Paper</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">Project Page</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">Huggingface</a>
+  📖<a href="https://bbdjj.github.io/FinMTM.github-io/">[Paper]</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">[Project Page]</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>
 </p>
-
 <!-- <p align="center">
   <a href="https://bbdjj.github.io/FinMTM.github-io/"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
   <a href="ARXIV_URL"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b"></a>
@@ -50,8 +49,7 @@
 ---
 
 ## 🔥 Updates
-- **2026-01**: Initial release of benchmark paper and evaluation protocol.
-- **TBD**: Dataset & evaluation scripts release.
+- **2026-01**: Initial release of benchmark dataset and paper.
 - **TBD**: Online leaderboard opens for submissions.
 
 ---
@@ -78,7 +76,7 @@ Financial reasoning is challenging for VLMs due to specialized chart formats, de
 
 
 ---
-**Multi-stage data construction** 
+**Data Construction Pipeline** 
 
 We propose a novel multi-stage data construction pipeline to scale multi-turn financial sessions, ensuring alignment with targeted cognitive requirements and traceability to verifiable evidence.
 
@@ -89,7 +87,7 @@ We propose a novel multi-stage data construction pipeline to scale multi-turn fi
 Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
 
 ## 📊 Results
-We benchmark a range of leading VLMs on FinMTM. The final score is the average across:
+We benchmark a range of 22 leading VLMs on FinMTM. The final score is the average across:
 **Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
 
 <p align="center">
@@ -144,14 +142,14 @@ We benchmark a range of leading VLMs on FinMTM. The final score is the average a
 
 #### 💡 Key Observations
 - Agentic settings expose larger gaps than pure reasoning-only settings.
-- Entity de-identification / fuzzing increases uncertainty and stresses evidence-grounded reasoning.
+- Removing identifiable entities increases difficulty and stresses evidence-grounded reasoning.
 - Scaling helps, but robust tool planning and execution remain a major bottleneck for open-source models.
 
 ---
 
 
 ## 📏 Evaluation
-FinMTM uses task-aware evaluation protocols across the three settings.
+FinMTM uses task-aware evaluation protocols across the three tasks.
 
 ### 1) Objective Questions
 - Exact-match scoring over the predicted option(s).
@@ -228,10 +226,9 @@ chmod +x etest.sh
 
 ![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg) ![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg) 
 
-**Usage and License Notices**: The data and code are intended and licensed for research use only.
-License: Attribution-NonCommercial 4.0 International It should abide by the policy of OpenAI: https://openai.com/policies/terms-of-use .
-
-
+**Code:** Apache 2.0
+**Dataset:** CC BY-NC 4.0
+Research-use only. Must comply with: https://openai.com/policies/terms-of-use.
 
 ## 📚 Citation
 If you find our work useful, please consider citing:

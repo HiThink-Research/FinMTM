@@ -183,11 +183,6 @@ pip install -r requirements.txt
 For objective questions
 ```bash
 cd ./inference/SC_MC
-MODEL_PATHS=(
-  "/cpfs01/NLP/models/Qwen3-VL-30B-A3B-Instruct"
-)
-SC_input_jsonl = "./OQ/output.jsonl"
-MC_input_jsonl = "./OQ/output_wrong_multi.jsonl"
 chmod +x etest.sh
 ./etest.sh
 
@@ -195,12 +190,6 @@ chmod +x etest.sh
 For muti-turns questions
 ```bash
 cd ./inference/MTQA
-MODEL_PATHS=(
-  "/model/qwen3vl4B_IS"
-  "/model/qwen3vl8B_IS"
-  "/model/qwen3vl4B_TK"
-  "/model/qwen3vl8B_TK"
-)
 chmod +x etest.sh
 ./etest.sh
 

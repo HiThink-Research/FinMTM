@@ -16,7 +16,7 @@ Features
 - No internal paths or company identifiers.
 
 Usage
-  python run_vlm_batch.py \
+  python inference.py \
     --backend qwen3vl \
     --api-base http://localhost:8000/v1 \
     --model qwen3vl-4b-instruct \
@@ -333,3 +333,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

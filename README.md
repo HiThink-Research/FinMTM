@@ -1,7 +1,7 @@
 
 <p align="center">
   <h1 align="center">
-    <img src="static/logo.png" alt="BizFinBench logo" height="40" style="position:relative; top:6px;">
+    <img src="static/logo.png"  height="40" style="position:relative; top:6px;">
     FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation
   </h1>
 </p>

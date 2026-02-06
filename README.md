@@ -234,7 +234,13 @@ Research-use only. Must comply with: https://openai.com/policies/terms-of-use.
 If you find our work useful, please consider citing:
 
 ```bibtex
-@article{
-  Coming Soon!
+@misc{zhang2026finmtm,
+      title={FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation}, 
+      author={Chenxi Zhang and Ziliang Gan and Liyun Zhu and Youwei Pang and Qing Zhang and Rongjunchen Zhang},
+      year={2026},
+      eprint={2602.03130},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2602.03130}, 
 }
 ```

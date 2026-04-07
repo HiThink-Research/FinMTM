@@ -49,7 +49,7 @@
 ---
 
 ## 🔥 Updates
-- **2026-06**: FinMTM has been accepted by ACL 2026. 🥳
+- **2026-04**: FinMTM has been accepted by ACL 2026. 🥳
 - **2026-01**: Initial release of benchmark dataset and paper.
 - **TBD**: Online leaderboard opens for submissions.
 

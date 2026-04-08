@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
+import re
 import traceback
 from tqdm import tqdm
 
+import config
 from io_utils import load_jsonl, ensure_dir
 from judge.turn_judge import judge_financial_turn
 from judge.session_judge import (
@@ -14,7 +17,6 @@ from judge.session_judge import (
     judge_session_logic_reasoning,
     judge_session_L1
 )
-import config
 
 
 def detect_multiview(task_type_hint: str, image_paths):
@@ -28,8 +30,16 @@ def detect_multiview(task_type_hint: str, image_paths):
 
 async def evaluate_sample(sample, eval_client,task):
     turns = sample.get("turns", [])
-    image_paths = sample.get("image_paths") or sample.get("image_path")
-    image_paths = image_paths if isinstance(image_paths, list) else [image_paths]
+    if not turns:
+        turns = []
+
+    raw_paths = sample.get("image_paths") or sample.get("image_path")
+    if isinstance(raw_paths, list):
+        image_paths = [p for p in raw_paths if p]
+    elif raw_paths:
+        image_paths = [raw_paths]
+    else:
+        image_paths = []
 
     # --- 1) Turn-Level ---
     turn_results = []
@@ -53,7 +63,7 @@ async def evaluate_sample(sample, eval_client,task):
 
     if is_multiview:
         session_eval_res = await judge_session_multiview(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
+        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
         citation_score = float(session_eval_res.get("Format_Citation_Score", 0) or 0)
 
         if citation_score < config.CITATION_FAIL_TH:
@@ -62,8 +72,11 @@ async def evaluate_sample(sample, eval_client,task):
             final_score = (avg_turn_score * 0.4) + (session_score * 0.6)
 
     elif num_turns == 5:
-        session_eval_res = await judge_session_behavior(eval_client, sample, image_paths[0] if image_paths else None)
-        session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
+        session_eval_res = await judge_session_behavior(
+            eval_client, sample,
+            image_paths[0] if image_paths else None
+        )
+        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
         robustness = float(session_eval_res.get("T3_Robustness_Score", 0) or 0)
 
         if robustness < config.ROBUSTNESS_FAIL_TH:
@@ -73,11 +86,11 @@ async def evaluate_sample(sample, eval_client,task):
 
     elif task=="L1":
         session_eval_res = await judge_session_L1(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
+        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
         final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
     elif task=="L2":
         session_eval_res = await judge_session_logic_reasoning(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score", 0) or 0)
+        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
         final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
         
     # --- 3) fallback（理论上不会走到） ---
@@ -95,8 +108,6 @@ async def evaluate_sample(sample, eval_client,task):
         "session_details": session_eval_res,
     }
 
-import os
-import re
 
 def level_from_input_path(input_path: str) -> str:
     """

@@ -39,6 +39,7 @@ import re
 import json
 import time
 import glob
+import base64
 import argparse
 import traceback
 from typing import List, Dict, Any, Tuple, Optional
@@ -150,10 +151,16 @@ class OpenAIBackend(BaseClient):
     def paths_to_image_contents(paths: List[str]) -> List[Dict[str, Any]]:
         contents = []
         for p in paths:
-            # naive: treat http(s) as url; skip local files unless user extends to base64
             if isinstance(p, str) and re.match(r"^https?://", p):
+                # remote URL
                 contents.append({"type": "image_url", "image_url": {"url": p}})
-            # else: ignore local files by default
+            elif isinstance(p, str) and os.path.exists(p):
+                # local file: encode as base64
+                with open(p, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                ext = os.path.splitext(p)[-1].lower()
+                mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "gif": "image/gif"}.get(ext.lstrip("."), "image/jpeg")
+                contents.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
         return contents
 
     def chat_with_memory(
@@ -161,7 +168,7 @@ class OpenAIBackend(BaseClient):
         image_paths: List[str],
         text: str,
         messages: List[Dict[str, Any]],
-        timeout: float = 120.0,
+        timeout: float = 600.0,
     ) -> str:
         # Convert our message schema to OpenAI's
         # Flatten each message["content"] list into a single list for multimodal
@@ -190,6 +197,7 @@ class OpenAIBackend(BaseClient):
             model=self.model,
             messages=converted_messages,
             timeout=timeout,
+            max_tokens=4096,
         )
         # robust extract
         try:
@@ -284,6 +292,7 @@ def process_file(
             turns, results = chat_with_memory(client, turns, image_paths)
             sample["turns"] = turns
             fout.write(json.dumps(sample, ensure_ascii=False) + "\n")
+            fout.flush()
 
     # atomic move
     os.replace(tmp_out, out_path)

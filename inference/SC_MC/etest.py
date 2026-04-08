@@ -12,6 +12,8 @@ from qwen3vl import Qwen3VLClient
 
 
 def extract_text_and_images(messages):
+    if not messages or not messages[0].get("content"):
+        return "", []
     contents = messages[0]["content"]
     txt = ""
     images = []
@@ -22,7 +24,6 @@ def extract_text_and_images(messages):
         elif part["type"] == "image_url":
             url = part["image_url"]["url"]
             images.append(url)
-    # txt+="\n 注意：不要输出<|begin_of_box|> <|end_of_box|>"
     return txt, images
 
 import re
@@ -41,8 +42,6 @@ def strip_box_markers(text: str) -> str:
 # ------------------------------------------
 def parse_model_answer(answer_str):
     """返回 ['A'] 或 ['A','C']，解析失败返回 []"""
-    # print(answer_str)
-
     if not answer_str:
         return []
 
@@ -53,19 +52,28 @@ def parse_model_answer(answer_str):
 
     s = s.replace("\\\"", "\"")
 
+    # --- 尝试解析 JSON 格式 {"answer": "A"} 或 {"answer": ["A","C"]} ---
     try:
         obj = json.loads(s)
         ans = obj.get("answer", None)
+        if isinstance(ans, str):
+            return [ans]
+        if isinstance(ans, list):
+            return ans
     except Exception:
+        pass
+
+    # --- 回退：裸字母或逗号分隔列表，如 "A" / "A,B,C" / "ABC" ---
+    # 去掉首尾空白，优先按逗号分隔，否则按字符逐个分割（过滤非字母）
+    fallback = s.strip().strip("'\"").strip()
+    if not fallback:
         return []
-
-    # --- 标准化输出 ---
-    if isinstance(ans, str):
-        return [ans]
-    if isinstance(ans, list):
-        return ans
-
-    return []
+    if "," in fallback:
+        parts = [p.strip().strip("'\"") for p in fallback.split(",")]
+        return [p for p in parts if p]
+    # 单个字母或连续字母视为选项列表
+    letters = re.findall(r"[A-Za-z]", fallback)
+    return letters if letters else []
 
 
 # ------------------------------------------

@@ -49,6 +49,7 @@
 - [⚖️ Judge](#️-judge)
   - [MTQA Judge](#mtqa-judge)
   - [Agent Judge](#agent-judge)
+- [📚 Agent Knowledge Base](#-agent-knowledge-base)
 - [📄 License](#-license)
 - [📚 Citation](#-citation)
 
@@ -528,7 +529,15 @@ The Agent pipeline runs in two stages: **Stage 1 (Inference)** generates multi-t
 
 #### Stage 1 — Agent Inference
 
-Requires a running MCP server (e.g., at `http://localhost:8081/sse`) providing financial tools (`FinQuery`, `Search`, `StockNews`, `ReportQuery`).
+Requires a running MCP server (e.g., at `http://localhost:8081/sse`) providing the following financial tools:
+
+| Tool | Description |
+|------|-------------|
+| **FinQuery** | Financial data retrieval: market quotes, macro data, fundamentals, trading information |
+| **StockNews** | Real-time stock news retrieval |
+| **AnalysisLib** | Financial analysis toolkit generating structured analysis frameworks for stocks, indices, futures, and funds; also supports investment recommendations |
+| **NoticeSearch** | Corporate announcement retrieval (e.g., filings, disclosures) |
+| **VisitWeb** | Parses webpage content from a given URL and returns it in text format |
 
 ```bash
 cd judge/Agent
@@ -625,6 +634,19 @@ Tool metrics computed:
 | `--out_root` | (required) | Root output directory                |
 | `--models`   | (all)      | Comma-separated model keys to run    |
 | `--with_ts`  | false      | Append timestamp to output directory |
+
+---
+
+## 📚 Agent Knowledge Base (Data Synthesis)
+
+FinMTM provides reference knowledge bases to support **financial long-chain Agent data synthesis**. These files serve as structured fact repositories for building multi-step tool-use reasoning trajectories.
+
+| File | Role | Count | Content |
+|------|------|------:|---------|
+| `action_kb.jsonl` | Document-grounded tool-call trajectories | 66 | Chart → Company identification → 4-step tool planning + execution results |
+| `knowledge_base2.jsonl` | Structured financial facts | 100 | Company → 8-dimension facts (market cap, PE, PB, PS, industry, financials, performance, news) + traceable evidence |
+
+These resources can be used as SFT trajectory pairs or RAG-grounded fact libraries for training and evaluating financial Agent models.
 
 ---
 

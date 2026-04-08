@@ -1,4 +1,3 @@
-
 <p align="center">
   <h1 align="center">
     <img src="static/logo.png"  height="40" style="position:relative; top:6px;">
@@ -28,18 +27,6 @@
 <p align="center">
   📖<a href="https://arxiv.org/abs/2602.03130">[Paper]</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">[Project Page]</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>
 </p>
-<!-- <p align="center">
-  <a href="https://bbdjj.github.io/FinMTM.github-io/"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
-  <a href="ARXIV_URL"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b"></a>
-  <a href="HF_DATASET_URL"><img src="https://img.shields.io/badge/Dataset-HuggingFace-yellow"></a>
-  <a href="LEADERBOARD_URL"><img src="https://img.shields.io/badge/Leaderboard-Online-blue"></a>
-  <a href="LICENSE_URL"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
-</p> -->
-
-<!-- <p align="center">
-  <b>FinMTM</b> is a multi-turn multimodal benchmark that evaluates financial VLMs under three settings:
-  objective questions, open-ended dialogues, and agent-based tasks with tool-use and multi-source evidence.
-</p> -->
 <br>
 <p align="center">
   <img src="static/main2.png" hetight="320" />
@@ -48,67 +35,54 @@
 
 ---
 
+## Table of Contents
+
+- [🔥 Updates](#-updates)
+- [🧭 Overview](#-overview)
+- [📊 Benchmark Results](#-benchmark-results)
+- [🛠️ Inference](#️-inference)
+  - [Environment Setup](#environment-setup)
+  - [Launching the Model Server](#launching-the-model-server)
+  - [MTQA: Multi-Turn Visual QA](#mtqa-multi-turn-visual-qa)
+  - [SC_MC: Single-Choice & Multi-Choice QA](#sc_mc-single-choice--multi-choice-qa)
+- [📄 License](#-license)
+- [📚 Citation](#-citation)
+
+---
+
 ## 🔥 Updates
-- **2026-04**: FinMTM has been accepted by ACL 2026. 🥳
+
+- **2026-04**: FinMTM accepted at **ACL 2026**. 🥳
 - **2026-01**: Initial release of benchmark dataset and paper.
 - **TBD**: Online leaderboard opens for submissions.
 
 ---
 
-## 📌 Contents
-- [Overview](#-overview)
-- [Results](#-results)
-- [Evaluation](#-evaluation)
-- [Quickstart](#-quickstart)
-- [License](#-license)
-- [Citation](#-citation)
-
----
-
 ## 🧭 Overview
+
 Financial reasoning is challenging for VLMs due to specialized chart formats, dense domain knowledge, long-horizon dependencies, and evidence-grounded tool use. Existing benchmarks are mostly single-turn and do not sufficiently measure **multi-turn dialogue stability**, **session-level memory**, or **agentic planning and execution**.
 
-**FinMTM** addresses this gap by providing:
-- **Objective questions**: single and multiple choice questions grounded in financial visuals.
+**FinMTM** addresses this gap with three task tracks:
 
-- **Open-ended questions**: multi-turn conversations that stress compositional reasoning, multi-step calculation, self-correction, and memory.
-
-- **Financial agent task**: tool-augmented multi-source workflows with long-horizon planning and evidence-grounded answers.
-
+| Task | Description |
+|------|-------------|
+| **Objective Questions** | Single-choice and multiple-choice questions grounded in financial visuals |
+| **Open-Ended Questions** | Multi-turn conversations stressing compositional reasoning, multi-step calculation, self-correction, and memory |
+| **Financial Agent Tasks** | Tool-augmented multi-source workflows with long-horizon planning and evidence-grounded answers |
 
 ---
-**Data Construction Pipeline** 
 
-We propose a novel multi-stage data construction pipeline to scale multi-turn financial sessions, ensuring alignment with targeted cognitive requirements and traceability to verifiable evidence.
+## 📊 Benchmark Results
 
-<p align="center">
-<img src="static/12d206da-5383-4200-9290-d43333931b24.png" alt="Fig. X. Multi-stage construction pipeline of FinMTM." style="zoom: 33%;" />
-</p>
-
-Our multi-stage construction pipeline. We progressively build (i) objective visual-grounded items, (ii) multi-turn open-ended sessions emphasizing composition/calculation/self-correction/memory, and (iii) agentic workflows with tool planning, tool execution, and evidence-grounded responses.
-
-## 📊 Results
-We benchmark a range of 22 leading VLMs on FinMTM. The final score is the average across:
-**Objective Questions**, **Open-Ended Questions**, and **Financial Agent**.
-
-<p align="center">
-  <img src="static/e1b91bdd-de1b-45eb-9dac-19a42f6f66f3.png" width="900" />
-</p>
-<p align="center"><i>Comparison of leading VLMs on FinMTM. Final score is the average of Objective, Open-Ended, and Agent tasks.</i></p>
-
-
-### Benchmark Results
-
+We benchmark 22 leading VLMs on FinMTM. Final score = average of Objective, Open-Ended, and Agent tasks.
 
 <details>
-  <summary> Benchmark Results (Click to Expand)</summary>
-
-  <br>
+  <summary> Full Benchmark Results (Click to Expand)</summary>
 
 **Column Definitions**
-- **Objective Questions:** Single-choice (Obj-Single), Multiple-choice (Obj-Multi)
-- **Open-Ended Questions:** Comprehension (Open-Com.), Calculation (Open-Cal.), Self-Correlation (Open-SelfCorr.), Memory (Open-Mem.)
-- **Financial Agent Tasks:** With fuzzing (Agent-w fuzz), Without fuzzing (Agent-w/o fuzz)
+- **Objective:** Obj-Single (single-choice), Obj-Multi (multiple-choice)
+- **Open-Ended:** Open-Com. (comprehension), Open-Cal. (calculation), Open-SelfCorr. (self-correction), Open-Mem. (memory)
+- **Agent:** Agent-w fuzz / Agent-w/o fuzz
 
 | Method | Obj-Single | Obj-Multi | Open-Com. | Open-Cal. | Open-SelfCorr. | Open-Mem. | Agent-w fuzz | Agent-w/o fuzz |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -124,7 +98,7 @@ We benchmark a range of 22 leading VLMs on FinMTM. The final score is the averag
 | InternVL2.5-26B | 70.5 | 31.3 | 61.7 | 57.7 | 32.3 | 22.8 | 11.2 | 14.0 |
 | InternVL2.5-40B | 72.3 | 35.2 | 66.1 | 64.6 | 36.2 | 26.7 | 13.5 | 16.8 |
 | InternVL3-78B | 75.6 | 42.4 | 76.2 | 77.6 | 43.6 | 32.6 | 18.2 | 22.8 |
-| _Other VL Series_ |||||||||
+| _Other VLMs_ |||||||||
 | MiMo-VL-7B | 61.1 | 21.4 | 75.1 | 75.4 | 47.2 | 39.9 | 20.2 | 25.5 |
 | GLM4.5V-108B | 73.7 | 51.0 | 85.4 | 79.6 | 51.1 | 42.2 | 26.5 | 32.4 |
 | _Qwen VL Series_ |||||||||
@@ -141,107 +115,263 @@ We benchmark a range of 22 leading VLMs on FinMTM. The final score is the averag
 
 </details>
 
-#### 💡 Key Observations
-- Agentic settings expose larger gaps than pure reasoning-only settings.
+**Key Observations**
+- Agentic settings expose larger gaps than reasoning-only settings.
 - Removing identifiable entities increases difficulty and stresses evidence-grounded reasoning.
 - Scaling helps, but robust tool planning and execution remain a major bottleneck for open-source models.
 
 ---
 
+## 🛠️ Inference
 
-## 📏 Evaluation
-FinMTM uses task-aware evaluation protocols across the three tasks.
+### Environment Setup
 
-### 1) Objective Questions
-- Exact-match scoring over the predicted option(s).
-- Multi-choice uses a set-overlap rule (precision/recall/F-score style) to penalize missing or spurious selections.
-
-### 2) Open-Ended Dialogues (Multi-turn)
-We score dialogues with a **weighted combination** of:
-- **turn-level quality** (per-turn correctness, grounding, reasoning quality)
-- **session-level quality** (cross-turn consistency, long-context stability, memory correctness)
-
-> Notably, the level taxonomy is defined at the **session level**, i.e., each level characterizes the overall cognitive requirement of an entire multi-turn conversation rather than any single turn in isolation.
-
-### 3) Financial Agent Tasks
-We evaluate:
-- **planning quality** (step ordering, tool selection, decomposition)
-- **tool execution** (tool name + core args correctness; evidence sufficiency)
-- **final outcome** (answer correctness + evidence-grounded summarization)
-
----
-
-
-## ⚡ Quickstart (The code is still under refinement.)
-
-### 1. Environment Setup
-
-Download the dataset from the [huggingface](https://huggingface.co/datasets/HiThink-Research/FinMTM) link. For evaluation, run the following commands to set up the environment:
 ```bash
-cd finmtm
-conda create -n finmtm_env python=3.10 -y
-conda activate finmtm_env
+conda create -n finmtm python=3.10 -y
+conda activate finmtm
 pip install -r requirements.txt
 ```
 
-### 2. Inference
-#### 2.1 Inference for Objective Questions (Single/Multiple Choice)
-```bash
-cd ./inference/SC_MC
-chmod +x etest.sh
-./etest.sh
+Core dependencies:
 ```
-#### 2.2 Inference for Multi-Turn QA
-```bash
-cd ./inference/MTQA
-chmod +x etest.sh
-./etest.sh
+torch >= 2.0.1
+transformers
+openai == 1.3.5
+tqdm
 ```
-#### 2.3 General Inference Command (Optional)
-To customize inference parameters, run the command below directly:
+
+Hardware: single GPU ≥ 24GB VRAM (H100 80GB / A100 80GB / 4090 24GB, etc.)
+
+---
+
+### Launching the Model Server
+
+#### vLLM (Recommended for local open-source models)
+
 ```bash
-python inference.py \
-  --backend qwen3vl \
-  --api-base http://localhost:8000/v1 \
-  --model qwen3vl-4b-instruct \
+pip install vllm
+
+python -m vllm.entrypoints.openai.api_server \
+  --model /path/to/your/model \
+  --trust-remote-code \
+  --served-model-name Your-Model-Name \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --tensor-parallel-size 1 \
+  --max-model-len 30720
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `--model` | Model path (local directory or HuggingFace ID) |
+| `--served-model-name` | Model name referenced in the API |
+| `--tensor-parallel-size` | Number of GPUs; increase for multi-GPU setups |
+| `--max-model-len` | Max context length; adjust based on VRAM |
+| `--port` | Server port (default 8000) |
+
+**Verify the server is running:**
+```bash
+curl http://127.0.0.1:8000/v1/models
+```
+
+#### OpenAI API (GPT models)
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+```
+
+---
+
+### MTQA: Multi-Turn Visual QA
+
+Multi-turn conversational inference with session-level memory.
+
+#### Data Format
+
+Input: `.jsonl`, one sample per line.
+
+```jsonl
+{"image_path": "/path/to/image.jpg", "turns": [{"turn_id": "T1", "question": "...", "gold_answer": "..."}]}
+{"image_paths": ["/path/to/img1.jpg", "/path/to/img2.png"], "turns": [...]}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `turns` | ✅ | Array of conversation turns |
+| `turns[].question` | ✅ | Question for this turn |
+| `turns[].turn_id` | ❌ | Turn ID (e.g., T1, T2) |
+| `turns[].gold_answer` | ❌ | Ground truth (not used in inference) |
+| `image_path` | ✅ | Single image path (string) |
+| `image_paths` | ✅ | Multiple image paths (list) |
+
+#### Running Inference
+
+```bash
+cd inference/MTQA
+mkdir -p inputs outputs
+
+# Place your data
+cp /path/to/your/data.jsonl inputs/
+
+# Run
+OPENAI_API_KEY=EMPTY python3 inference.py \
+  --backend openai \
+  --api-base http://127.0.0.1:8000/v1 \
+  --model Your-Model-Name \
   --input-dir ./inputs \
   --output-dir ./outputs \
   --include "*.jsonl"
 ```
-### 3. Evaluation
 
-For results of multi-turn QA tasks, run the following commands to start evaluation:
-```bash
-python -m eval_runner.main \
-  --dirs /path/to/data \            # Directory of data to evaluate
-  --client qwen \                   # Client type
-  --api_base http://127.0.0.1:8000/v1 \  # API service address
-  --model Qwen3-VL-30B-A3B-Instruct  # Model used for evaluation
+#### Output Format
 
-# Alternatively, run via the script (optional)
-chmod +x etest.sh
-./etest.sh
+```jsonl
+{
+  "image_path": "/path/to/image.jpg",
+  "turns": [
+    {
+      "turn_id": "T1",
+      "question": "...",
+      "gold_answer": "...",
+      "model_answer": "The model's response to this turn."
+    }
+  ]
+}
 ```
+
+Output is written to `{original_name}_vlm.jsonl` in `--output-dir`.
+
+#### MTQA Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--backend` | `qwen3vl` | Backend: `openai` or `qwen3vl` |
+| `--api-base` | `http://localhost:8000/v1` | API server address |
+| `--model` | `qwen3vl` | Model name |
+| `--input-dir` | (required) | Input `.jsonl` directory |
+| `--output-dir` | (required) | Output directory |
+| `--include` | `*.jsonl` | Glob pattern for input files |
+| `--max-retries` | `2` | Max retries per turn on failure |
+| `--retry-sleep` | `1.5` | Seconds between retries |
+
+---
+
+### SC_MC: Single-Choice & Multi-Choice QA
+
+Single-round multiple-choice question inference with accuracy evaluation.
+
+#### Data Format
+
+Input: `.jsonl`, one sample per line.
+
+```jsonl
+{
+  "messages": [
+    {
+      "content": [
+        {"type": "text", "text": "Which company had the highest revenue in 2023?\nA. Company A\nB. Company B\nC. Company C\nD. Company D"},
+        {"type": "image_url", "image_url": {"url": "/path/to/image.jpg"}}
+      ]
+    }
+  ],
+  "choices": [
+    {"message": {"content": [{"text": "{\"answer\": \"A\"}"}]}}
+  ]
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `messages[0].content` | ✅ | Array of text + image parts |
+| `messages[0].content[].text` | ✅ | Question text with options |
+| `messages[0].content[].image_url` | ❌ | Image attachment |
+| `choices[0].message.content[0].text` | ✅ | Ground truth in JSON: `{"answer": "A"}` or `{"answer": ["A","C"]}` |
+
+#### Running Inference
+
+```bash
+cd inference/SC_MC
+mkdir -p inputs outputs
+
+# Place your data
+cp /path/to/your/data.jsonl inputs/
+
+# Run
+OPENAI_API_KEY=EMPTY python3 etest.py \
+  --input inputs/your_data.jsonl \
+  --output outputs/eval_results.jsonl \
+  --summary outputs/eval_summary.json \
+  --api-base http://127.0.0.1:8000/v1 \
+  --model Your-Model-Name
+```
+
+#### Answer Parsing
+
+The parser accepts three formats automatically:
+
+| Format | Example | Returns |
+|--------|---------|---------|
+| JSON object | `{"answer": "A"}` or `{"answer": ["A","C"]}` | `['A']` / `['A','C']` |
+| Comma-separated | `"A,C"` | `['A', 'C']` |
+| Bare letter(s) | `"A"` or `"ABC"` | `['A']` / `['A','B','C']` |
+
+#### Output Files
+
+After evaluation:
+
+```
+outputs/
+├── eval_results.jsonl   # Per-sample results: gt, model answer, correct/incorrect
+└── eval_summary.json    # Aggregate: total, correct, accuracy
+```
+
+`eval_summary.json` example:
+```json
+{
+  "total": 1000,
+  "correct": 782,
+  "accuracy": 0.782
+}
+```
+
+#### SC_MC Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--input` | (required) | Input `.jsonl` file |
+| `--output` | `eval_results.jsonl` | Per-sample result output path |
+| `--summary` | `eval_summary.json` | Summary statistics output path |
+| `--api-base` | `http://localhost:8000/v1` | API server address |
+| `--model` | `Qwen3-VL-30B-A3B-Instruct` | Model name |
+| `--temperature` | `0.0` | Sampling temperature |
+
+> **Tip:** You can also pass arguments via environment variables `MODEL_NAME`, `CURRENT_VLM_MODEL`, and `CURRENT_VLM_PORT`, or edit the `__main__` block directly for fixed configurations.
+
+---
 
 ## 📄 License
 
-![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg) ![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg) 
+![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg) ![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)
 
 **Code:** Apache 2.0
 **Dataset:** CC BY-NC 4.0
+
 Research-use only. Must comply with: https://openai.com/policies/terms-of-use.
 
+---
+
 ## 📚 Citation
+
 If you find our work useful, please consider citing:
 
 ```bibtex
 @misc{zhang2026finmtm,
-      title={FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation}, 
+      title={FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation},
       author={Chenxi Zhang and Ziliang Gan and Liyun Zhu and Youwei Pang and Qing Zhang and Rongjunchen Zhang},
       year={2026},
       eprint={2602.03130},
       archivePrefix={arXiv},
       primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2602.03130}, 
+      url={https://arxiv.org/abs/2602.03130},
 }
 ```

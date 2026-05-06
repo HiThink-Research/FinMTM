@@ -4,25 +4,6 @@
     FinMTM: A Multi-Turn Multimodal Benchmark for Financial Reasoning and Agent Evaluation
   </h1>
 </p>
-  <p align="center">
-       <strong>Chenxi Zhang</strong><sup>1,2*</sup>
-    ,
-    <strong>Ziliang Gan</strong><sup>1,3*</sup>
-    ,
-    <strong>Liyun Zhu</strong><sup>1*</sup>
-    ,
-    <strong>Youwei Pang</strong><sup>4</sup>
-    ,
-    <strong>Qing Zhang</strong><sup>5</sup>
-    ,
-     <strong>Rongjunchen Zhang</strong><sup>1 ♠</sup>
-  </p>
-
-<p align="center">
-  <sup>1</sup> HiThink Research   <sup>2</sup>Wuhan University   <sup>3</sup>Zhejiang University   <sup>4</sup> Nanyang Technological University   <sup>5</sup>Shanghai Institute of Technology   <br>
-  <sub><sup>*</sup>Equal Contribution   <sup>♠</sup>Corresponding Author  </sub> <br>
-  </sup>Correspondence: zhangrongjunchen@myhexin.com <sup>
-</p>
 
 <p align="center">
   📖<a href="https://arxiv.org/abs/2602.03130">[Paper]</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">[Project Page]</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>

@@ -38,7 +38,6 @@
 
 ## 🔥 Updates
 
-- **2026-04**: FinMTM has been accepted for the **ACL 2026 Main Conference**. 🥳
 - **2026-01**: Initial release of benchmark dataset and paper.
 - **TBD**: Online leaderboard opens for submissions.
 

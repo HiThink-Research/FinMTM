@@ -5,9 +5,9 @@
   </h1>
 </p>
 
-<p align="center">
+<!-- <p align="center">
   📖<a href="https://arxiv.org/abs/2602.03130">[Paper]</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">[Project Page]</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>
-</p>
+</p> -->
 <br>
 <p align="center">
   <img src="static/main2.png" hetight="320" />

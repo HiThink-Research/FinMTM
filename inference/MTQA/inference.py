@@ -112,6 +112,22 @@ def build_assistant_message(text: str) -> Dict[str, Any]:
     return {"role": "assistant", "content": [{"type": "text", "text": text}]}
 
 
+OPEN_ENDED_SYSTEM_PROMPT = (
+    "You are a financial expert. Read the current question, the supplied image(s), "
+    "and the conversation history. Answer only the current question. Do not include "
+    "explanations unless the question explicitly requires them."
+)
+
+
+def build_system_message() -> Dict[str, Any]:
+    """Return the manuscript Figure 10 system instruction."""
+
+    return {
+        "role": "system",
+        "content": [{"type": "text", "text": OPEN_ENDED_SYSTEM_PROMPT}],
+    }
+
+
 # -------------------- Backends --------------------
 class BaseClient:
     def chat_with_memory(
@@ -206,6 +222,9 @@ class OpenAIBackend(BaseClient):
         resp = self.client.chat.completions.create(
             model=self.model,
             messages=converted_messages,
+            temperature=0.0,
+            top_p=1.0,
+            max_tokens=4096,
             timeout=timeout,
         )
         # robust extract
@@ -236,7 +255,7 @@ def chat_with_memory(
     """
     Run multi-turn conversation with memory.
     """
-    messages: List[Dict[str, Any]] = []
+    messages: List[Dict[str, Any]] = [build_system_message()]
     all_results: List[Dict[str, Any]] = []
 
     for turn in turns:
@@ -275,6 +294,8 @@ def process_file(
     client: BaseClient,
     in_path: str,
     out_path: str,
+    max_retries: int = 2,
+    retry_sleep: float = 1.5,
 ):
     ensure_dir(os.path.dirname(out_path) or ".")
     # write to a temp then move for safety
@@ -297,7 +318,13 @@ def process_file(
             #     continue
 
             turns = sample.get("turns", [])
-            turns, results = chat_with_memory(client, turns, image_paths)
+            turns, results = chat_with_memory(
+                client,
+                turns,
+                image_paths,
+                max_retries=max_retries,
+                retry_sleep=retry_sleep,
+            )
             sample["turns"] = turns
             fout.write(json.dumps(sample, ensure_ascii=False) + "\n")
 
@@ -342,11 +369,16 @@ def main():
         out_path = os.path.join(args.output_dir, base.replace(".jsonl", "_vlm.jsonl"))
         log(f"\n🚀 Processing: {in_path}")
         log(f"📤 Output:     {out_path}")
-        process_file(client, in_path, out_path)
+        process_file(
+            client,
+            in_path,
+            out_path,
+            max_retries=args.max_retries,
+            retry_sleep=args.retry_sleep,
+        )
 
     log("🎉 All done!")
 
 
 if __name__ == "__main__":
     main()
-

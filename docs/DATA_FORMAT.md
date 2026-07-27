@@ -35,7 +35,9 @@ Required fields:
 - reference `ActionTrace`, visual observation, thought, and gold conclusion
 
 Agent inference writes `trace.jsonl` with model/reference answers, observations,
-thoughts, and tool-call sets. Agent evaluation consumes that trace directly.
+thoughts, tool-call sets, structured tool results, and accumulated tool feedback.
+The tool evidence is required for evidence-grounded `Qa`/`Qr` judging. Agent
+evaluation consumes that trace directly.
 
 Dataset splits are task-based (`objective`, `open-ended L1-L4`, and `agent`).
 Fuzz and non-fuzz Agent subsets must be carried as explicit metadata in the

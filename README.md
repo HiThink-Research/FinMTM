@@ -26,16 +26,8 @@
 </p>
 
 <p align="center">
-  📖<a href="https://arxiv.org/abs/2602.03130">[Paper]</a> | 🏠<a href="https://bbdjj.github.io/FinMTM.github-io/">[Project Page]</a>|🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>
+  🤗<a href="https://huggingface.co/datasets/HiThink-Research/FinMTM">[Huggingface]</a>
 </p>
-<!-- <p align="center">
-  <a href="https://bbdjj.github.io/FinMTM.github-io/"><img src="https://img.shields.io/badge/Paper-PDF-red"></a>
-  <a href="ARXIV_URL"><img src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b"></a>
-  <a href="HF_DATASET_URL"><img src="https://img.shields.io/badge/Dataset-HuggingFace-yellow"></a>
-  <a href="LEADERBOARD_URL"><img src="https://img.shields.io/badge/Leaderboard-Online-blue"></a>
-  <a href="LICENSE_URL"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
-</p> -->
-
 <!-- <p align="center">
   <b>FinMTM</b> is a multi-turn multimodal benchmark that evaluates financial VLMs under three settings:
   objective questions, open-ended dialogues, and agent-based tasks with tool-use and multi-source evidence.
@@ -49,7 +41,7 @@
 ---
 
 ## 🔥 Updates
-- **2026-04**: FinMTM has been accepted by ACL 2026. 🥳
+- **2026-07**: Evaluation code and documentation synchronized with the submitted manuscript.
 - **2026-01**: Initial release of benchmark dataset and paper.
 - **TBD**: Online leaderboard opens for submissions.
 

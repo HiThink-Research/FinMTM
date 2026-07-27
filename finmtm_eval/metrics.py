@@ -7,6 +7,7 @@ produce rubric scores, but all arithmetic aggregation is performed here.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -26,6 +27,8 @@ def clamp(value: Any, lower: float, upper: float) -> float:
     try:
         number = float(value)
     except (TypeError, ValueError):
+        number = lower
+    if math.isnan(number):
         number = lower
     return min(max(number, lower), upper)
 

@@ -40,7 +40,8 @@ The final score is `0.5 * turn_score + 0.5 * session_score`. Internal scores are
 
 Tool calls are represented as `(name/function, core arguments)` and matched
 one-to-one as unordered sets. Matching is semantic and task-functional; order
-and exact strings are not evaluation targets.
+and exact strings are not evaluation targets. The judge reports indexed matched
+pairs, and Python validates that no predicted or reference index is reused.
 
 ```text
 precision = TP / predicted_count
@@ -53,4 +54,10 @@ Qfinal    = Qa + Qr + Qt
 
 `Qa` is a graded 0-50 answer score. `Qr` is a 0-25 evidence-grounded reasoning
 score. `Qt` is a 0-25 planning score. `EMR` is reported only as a diagnostic and
-does not enter `Qfinal`. All arithmetic is performed in `finmtm_eval/metrics.py`.
+does not enter `Qfinal`. Saved traces include actual tool results and accumulated
+tool feedback so that `Qa` and `Qr` can be checked against acquired evidence.
+All arithmetic is performed in `finmtm_eval/metrics.py`.
+
+The manuscript's Table 10 `F1` column is an auxiliary diagnostic. The `Tool`
+score and public evaluator follow Equation (5) and always use `F2` with
+`beta=2`.

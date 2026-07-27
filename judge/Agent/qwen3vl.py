@@ -57,6 +57,7 @@ class Qwen3VLClient:
         text=None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
+        top_p: float = 1.0,
     ) -> str:
         content = []
         images = [image] if isinstance(image, str) else (image or [])
@@ -70,6 +71,7 @@ class Qwen3VLClient:
             model=self.model,
             messages=[{"role": "user", "content": content}],
             temperature=temperature,
+            top_p=top_p,
             max_tokens=max_tokens,
             timeout=self.timeout,
         )
@@ -83,6 +85,7 @@ class Qwen3VLClient:
         messages=None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
+        top_p: float = 1.0,
     ) -> str:
         """Generate one turn from prior messages without mutating the caller."""
 
@@ -100,6 +103,7 @@ class Qwen3VLClient:
             model=self.model,
             messages=request_messages,
             temperature=temperature,
+            top_p=top_p,
             max_tokens=max_tokens,
             timeout=self.timeout,
         )

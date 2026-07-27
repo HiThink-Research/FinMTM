@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 from ..json_utils import safe_parse_json
@@ -14,8 +15,6 @@ LEVEL_CHECKLISTS = {
         "items": (
             "Entity_Recognition",
             "Spatial_Awareness",
-            "Visual_Grounding",
-            "Cross_Turn_Consistency",
         ),
     },
     "L2": {
@@ -23,8 +22,6 @@ LEVEL_CHECKLISTS = {
         "items": (
             "Multi_Step_Numerical_Calculation",
             "Chart_Numerical_Estimation",
-            "Unit_Consistency",
-            "Cross_Turn_Logic",
         ),
     },
     "L3": {
@@ -32,8 +29,6 @@ LEVEL_CHECKLISTS = {
         "items": (
             "Adversarial_Robustness",
             "Logical_Consistency",
-            "Self_Correction",
-            "Evidence_Grounding",
         ),
     },
     "L4": {
@@ -42,7 +37,6 @@ LEVEL_CHECKLISTS = {
             "Cross_Page_Entity_Linking",
             "Long_Context_Memory",
             "Multi_Source_Knowledge_Fusion",
-            "Citation_Traceability",
         ),
     },
 }
@@ -52,6 +46,8 @@ def _clamp_score(value: Any) -> float:
     try:
         number = float(value)
     except (TypeError, ValueError):
+        number = 0.0
+    if math.isnan(number):
         number = 0.0
     return min(max(number, 0.0), 10.0)
 
@@ -108,9 +104,24 @@ Overall_Score must be the arithmetic mean of the checklist scores.
             "Overall_Score": 0.0,
             "Pass": False,
             "Critique": f"Runtime error: {exc}",
+            "judge_status": "error",
         }
 
     raw_scores = result.get("Checklist_Scores", {}) or {}
+    missing_items = [
+        item for item in specification["items"] if item not in raw_scores
+    ]
+    if missing_items:
+        return {
+            "Checklist_Scores": {},
+            "Overall_Score": 0.0,
+            "Pass": False,
+            "Critique": (
+                "Invalid judge response; missing checklist items: "
+                + ", ".join(missing_items)
+            ),
+            "judge_status": "invalid_response",
+        }
     checklist_scores = {
         item: _clamp_score(raw_scores.get(item, 0.0))
         for item in specification["items"]
@@ -121,6 +132,7 @@ Overall_Score must be the arithmetic mean of the checklist scores.
         "Overall_Score": overall,
         "Pass": bool(result.get("Pass", overall >= 5.0)),
         "Critique": str(result.get("Critique", "")),
+        "judge_status": "ok",
     }
 
 

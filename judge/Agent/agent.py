@@ -25,7 +25,9 @@ class MultiRoundAgent:
     async def run_multiround(self, query: str, image_url: str = "") -> Dict[str, Any]:
         rounds: List[Dict[str, Any]] = []
         all_tool_calls: List[Dict[str, str]] = []
+        all_tool_results: List[Dict[str, Any]] = []
         all_thoughts: List[str] = []
+        all_visual_observations: List[str] = []
 
         final_answer: Optional[str] = None
         visual_observation: str = ""
@@ -83,10 +85,16 @@ class MultiRoundAgent:
 
             if visual_obs:
                 if isinstance(visual_obs, list):
-                    visual_observation = "\n".join([str(x) for x in visual_obs])
+                    current_visual_observation = "\n".join(
+                        [str(x) for x in visual_obs]
+                    )
                 else:
-                    visual_observation = str(visual_obs)
-                plan_rec["visual_observation"] = visual_observation
+                    current_visual_observation = str(visual_obs)
+                all_visual_observations.append(
+                    f"Round {round_id}: {current_visual_observation}"
+                )
+                visual_observation = "\n".join(all_visual_observations)
+                plan_rec["visual_observation"] = current_visual_observation
 
             # 4) 执行工具
             current_round_feedback = ""
@@ -112,15 +120,43 @@ class MultiRoundAgent:
                     )
                     parsed_res = self._parse_mcp_tool_result(result)
                     current_round_feedback += f"{tool_name}: {parsed_res}\n"
+                    tool_result = {
+                        "round": round_id,
+                        "tool": tool_name,
+                        "query": tool_query,
+                        "status": "ok",
+                        "result": parsed_res,
+                    }
+                    plan_rec.setdefault("tool_results", []).append(tool_result)
+                    all_tool_results.append(tool_result)
                     self.logger.info(f"✅ 工具返回: {parsed_res[:60]}...")
                 except asyncio.TimeoutError:
                     self.logger.error(f"❌ 工具 {tool_name} 超时")
                     current_round_feedback += f"{tool_name}: Error (Timeout)\n"
+                    tool_result = {
+                        "round": round_id,
+                        "tool": tool_name,
+                        "query": tool_query,
+                        "status": "timeout",
+                        "result": "",
+                    }
+                    plan_rec.setdefault("tool_results", []).append(tool_result)
+                    all_tool_results.append(tool_result)
                 except Exception as e:
                     self.logger.error(f"❌ 工具 {tool_name} 失败: {e}")
                     current_round_feedback += f"{tool_name}: Error ({str(e)})\n"
+                    tool_result = {
+                        "round": round_id,
+                        "tool": tool_name,
+                        "query": tool_query,
+                        "status": "error",
+                        "result": str(e),
+                    }
+                    plan_rec.setdefault("tool_results", []).append(tool_result)
+                    all_tool_results.append(tool_result)
 
             tool_feedback += current_round_feedback
+            plan_rec["tool_feedback"] = current_round_feedback
             rounds.append(plan_rec)
 
             # 5) 下一轮输入
@@ -178,6 +214,8 @@ class MultiRoundAgent:
             "rounds": rounds,
             "thought": summary_thought,
             "tool_calls": all_tool_calls,
+            "tool_results": all_tool_results,
+            "tool_feedback": tool_feedback,
             "visual_observation": visual_observation,
         }
 

@@ -131,6 +131,8 @@ def evaluate_jsonl_with_accuracy(
     client = Qwen3VLClient(api_base=api_base, model=model)
 
     total = 0
+    evaluated = 0
+    failed = 0
     correct = 0
     score_sum = 0.0
 
@@ -141,15 +143,28 @@ def evaluate_jsonl_with_accuracy(
          open(output_jsonl, "w", encoding="utf-8") as fout:
 
         for line_idx, line in enumerate(tqdm(fin, desc="Evaluating")):
+            if not line.strip():
+                continue
             total += 1
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+                text, images = extract_text_and_images(record["messages"])
+            except Exception as exc:
+                failed += 1
+                fout.write(
+                    json.dumps(
+                        {
+                            "sample_id": line_idx,
+                            "evaluation_status": "invalid_input",
+                            "error": str(exc),
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                continue
 
             # -------- 1) 抽取题干 + 图片 --------
-            text, images = extract_text_and_images(record["messages"])
-
-
-            # print(text)
-
             real_images = []
             for img in images:
                 if os.path.exists(img):
@@ -171,7 +186,20 @@ def evaluate_jsonl_with_accuracy(
                     temperature=0.0
                 )
             except Exception as e:
-                pred_str = f"[ERROR]{e}"
+                failed += 1
+                fout.write(
+                    json.dumps(
+                        {
+                            "sample_id": line_idx,
+                            "query": record.get("query", ""),
+                            "evaluation_status": "generation_error",
+                            "error": str(e),
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                continue
 
             # -------- 3) 解析预测 --------
 
@@ -184,9 +212,26 @@ def evaluate_jsonl_with_accuracy(
             # -------- 4) 解析 GT --------
             gt_ans = get_ground_truth(record)
             print(pred_ans,gt_ans)
+            if not gt_ans:
+                failed += 1
+                fout.write(
+                    json.dumps(
+                        {
+                            "sample_id": line_idx,
+                            "query": record.get("query", ""),
+                            "model_answer_raw": pred_str,
+                            "model_answer": pred_ans,
+                            "evaluation_status": "invalid_ground_truth",
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                continue
 
             # -------- 5) 论文公式 (1) 评分 --------
             item_score = score_answer(pred_ans, gt_ans)
+            evaluated += 1
             hit = item_score == 1.0
             score_sum += item_score
             if hit:
@@ -200,18 +245,23 @@ def evaluate_jsonl_with_accuracy(
                 "model_answer_raw": pred_str,
                 "model_answer": pred_ans,
                 "score": item_score,
-                "correct": hit
+                "correct": hit,
+                "evaluation_status": (
+                    "ok" if pred_ans else "invalid_model_output"
+                ),
             }
             fout.write(json.dumps(out, ensure_ascii=False) + "\n")
 
     # -----------------------------------
     # 统计
     # -----------------------------------
-    acc = correct / total if total else 0
-    mean_score = score_sum / total if total else 0
+    acc = correct / evaluated if evaluated else 0
+    mean_score = score_sum / evaluated if evaluated else 0
 
     summary = {
         "total": total,
+        "evaluated": evaluated,
+        "failed": failed,
         "correct": correct,
         "accuracy": acc,
         "mean_score": mean_score,
@@ -223,6 +273,8 @@ def evaluate_jsonl_with_accuracy(
 
     print("\n==== 评测完成 ====")
     print("Total:", total)
+    print("Evaluated:", evaluated)
+    print("Failed:", failed)
     print("Correct:", correct)
     print("Accuracy:", f"{acc:.4f}")
     print("Mean Eq.(1) score:", f"{mean_score:.4f}")

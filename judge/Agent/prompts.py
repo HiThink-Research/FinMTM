@@ -6,6 +6,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .utils import unique_tool_calls
+
 
 def agent_sys_prompt(query: str) -> str:
     return f"""
@@ -43,8 +45,20 @@ def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
     reference_answer = sample.get("reference_gold_answer", "")
     model_visual = sample.get("model_visual_observation", "")
     reference_visual = sample.get("reference_visual_observation", "")
-    model_tools = sample.get("model_tool_calls", [])
-    reference_tools = sample.get("reference_tool_calls", [])
+    model_tools = unique_tool_calls(sample.get("model_tool_calls", []))
+    reference_tools = unique_tool_calls(sample.get("reference_tool_calls", []))
+    indexed_model_tools = [
+        {"index": index, "call": call}
+        for index, call in enumerate(model_tools)
+    ]
+    indexed_reference_tools = [
+        {"index": index, "call": call}
+        for index, call in enumerate(reference_tools)
+    ]
+    model_tool_results = sample.get("model_tool_results", [])
+    reference_tool_results = sample.get("reference_tool_results", [])
+    model_tool_feedback = sample.get("model_tool_feedback", "")
+    reference_tool_feedback = sample.get("reference_tool_feedback", "")
     model_thought = sample.get("model_thought", "")
     reference_thought = sample.get("reference_thought", "")
 
@@ -66,8 +80,8 @@ def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
 
 二、工具调用匹配
 参考轨迹是有效、效率导向的信息需求基线，不是唯一推理路径。你只需进行一对一语义
-匹配并报告 true_positives；评分代码将按论文公式计算 F2×25（β=2），并将 EMR
-作为诊断指标。
+匹配并报告 matched_pairs；评分代码会验证索引的一对一性，并按论文公式计算
+F2×25（β=2）。EMR 仅作为诊断指标。
 
 匹配规则：
 1. 将轨迹视为无序集合，不比较调用顺序。
@@ -76,7 +90,8 @@ def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
    语义一致。
 4. 功能等价、满足同一信息需求的调用可以匹配，不要求工具名字符串完全一致。
 5. 参数允许语义等价，例如“2024Q4”与“2024年第四季度”。
-6. predicted_count 和 reference_count 必须分别等于给定集合的大小。
+6. matched_pairs 中的 predicted_index 和 reference_index 必须引用下方带编号的集合；
+   每个索引最多出现一次。
 
 三、推理质量 reasoning_score（0～25）
 评价推理是否连贯、是否由图像与实际工具返回结果支持，以及是否存在幻觉、逻辑断层
@@ -86,6 +101,13 @@ def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
 {{
   "answer_score": 0～50,
   "tool_metrics": {{
+    "matched_pairs": [
+      {{
+        "predicted_index": 0,
+        "reference_index": 0,
+        "basis": "工具功能及核心参数为何语义匹配"
+      }}
+    ],
     "true_positives": 0,
     "predicted_count": 0,
     "reference_count": 0,
@@ -110,10 +132,22 @@ def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
 {reference_answer}
 
 模型工具调用（Predicted Set）：
-{json.dumps(model_tools, ensure_ascii=False, indent=2)}
+{json.dumps(indexed_model_tools, ensure_ascii=False, indent=2)}
 
 参考工具调用（Reference Set）：
-{json.dumps(reference_tools, ensure_ascii=False, indent=2)}
+{json.dumps(indexed_reference_tools, ensure_ascii=False, indent=2)}
+
+模型实际工具返回：
+Structured results:
+{json.dumps(model_tool_results, ensure_ascii=False, indent=2)}
+Accumulated feedback:
+{model_tool_feedback}
+
+参考工具返回（若数据提供）：
+Structured results:
+{json.dumps(reference_tool_results, ensure_ascii=False, indent=2)}
+Accumulated feedback:
+{reference_tool_feedback}
 
 模型视觉观察与推理：
 Visual: {model_visual}

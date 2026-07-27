@@ -70,6 +70,8 @@ async def evaluate_sample(
     task: str | None = None,
 ) -> dict[str, Any]:
     turns = sample.get("turns", [])
+    if not isinstance(turns, list) or not turns:
+        raise ValueError("open-ended sample must contain at least one turn")
     image_paths = _normalise_images(sample)
     level = level_from_sample(sample, fallback=task)
 
@@ -113,6 +115,12 @@ async def evaluate_sample(
         alpha=0.5,
         report_scale=100.0,
     )
+    judge_statuses = [
+        item.get("judge_status", "ok") for item in turn_results
+    ] + [session_result.get("judge_status", "ok")]
+    evaluation_status = (
+        "ok" if all(status == "ok" for status in judge_statuses) else "error"
+    )
     return {
         "sample_id": sample.get("sample_id") or sample.get("session_id"),
         "image_path": sample.get("image_path"),
@@ -129,6 +137,7 @@ async def evaluate_sample(
         "session_critique": session_result.get("Critique", ""),
         "turn_details": turn_results,
         "session_details": session_result,
+        "evaluation_status": evaluation_status,
     }
 
 
@@ -159,5 +168,13 @@ async def run_file(input_path: str, output_path: str, eval_client: Any):
             except Exception as exc:
                 print(f"Sample failed: {exc}")
                 traceback.print_exc()
+                failure = {
+                    "sample_id": sample.get("sample_id")
+                    or sample.get("session_id"),
+                    "evaluation_status": "error",
+                    "error": str(exc),
+                }
+                output.write(json.dumps(failure, ensure_ascii=False) + "\n")
+                output.flush()
 
     print(f"Done. Saved to {output_path}")

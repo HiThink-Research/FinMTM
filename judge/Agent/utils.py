@@ -80,3 +80,25 @@ def normalize_image_path(image_path):
     if isinstance(image_path, list):
         return image_path[0] if image_path else ""
     return image_path or ""
+
+
+def unique_tool_calls(calls: Any) -> List[Any]:
+    """Return exact duplicate-free calls while preserving their first occurrence."""
+
+    unique: List[Any] = []
+    seen = set()
+    for call in calls or []:
+        try:
+            canonical = json.dumps(
+                call,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        except TypeError:
+            canonical = str(call)
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        unique.append(call)
+    return unique

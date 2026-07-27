@@ -57,7 +57,27 @@ async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, lo
                 ref_thought = turn.get("Thought", {})
                 ref_obs = turn.get("VisualObservation", {})
                 ref_action = turn.get("ActionTrace", [])
-                ref_gold = (turn.get("gold_answer", {}) or {}).get("final_conclusion", "") or item.get("gold_answer", "")
+                ref_tool_results = (
+                    turn.get("ToolResults")
+                    or turn.get("tool_results")
+                    or item.get("reference_tool_results")
+                    or []
+                )
+                ref_tool_feedback = (
+                    turn.get("ToolFeedback")
+                    or turn.get("tool_feedback")
+                    or item.get("reference_tool_feedback")
+                    or ""
+                )
+                raw_ref_gold = turn.get("gold_answer", "")
+                if isinstance(raw_ref_gold, dict):
+                    ref_gold = raw_ref_gold.get("final_conclusion", "")
+                else:
+                    ref_gold = str(raw_ref_gold or "")
+                fallback_gold = item.get("gold_answer", "")
+                if isinstance(fallback_gold, dict):
+                    fallback_gold = fallback_gold.get("final_conclusion", "")
+                ref_gold = ref_gold or str(fallback_gold or "")
 
                 logger.info(f"🧩 Processing [{idx}/{len(lines)}]: {question[:30]}...")
 
@@ -70,6 +90,8 @@ async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, lo
                         "final_answer": "Error",
                         "rounds": [],
                         "tool_calls": [],
+                        "tool_results": [],
+                        "tool_feedback": "",
                         "thought": "",
                         "visual_observation": "",
                     }
@@ -87,6 +109,10 @@ async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, lo
 
                     "model_tool_calls": res.get("tool_calls", []),
                     "reference_tool_calls": ref_action,
+                    "model_tool_results": res.get("tool_results", []),
+                    "reference_tool_results": ref_tool_results,
+                    "model_tool_feedback": res.get("tool_feedback", ""),
+                    "reference_tool_feedback": ref_tool_feedback,
 
                     "model_thought": res.get("thought", ""),
                     "reference_thought": ref_thought,

@@ -28,6 +28,9 @@ class OpenEndedMetricTests(unittest.TestCase):
     def test_dialogue_alpha_and_reporting_scale(self):
         self.assertEqual(dialogue_score(8, 6), 70.0)
 
+    def test_nan_is_safely_clamped(self):
+        self.assertEqual(turn_capability_score([float("nan"), 0, 0, 0, 0]), 0.0)
+
 
 class AgentMetricTests(unittest.TestCase):
     def test_f2_penalises_missing_required_calls(self):

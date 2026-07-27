@@ -15,9 +15,12 @@ This pipeline implements manuscript Equations (5)-(6).
   the total score.
 - `total_score`: `Qa + Qr + Qt`, from 0 to 100.
 
-The LLM judge reports semantic true-positive matches and the two rubric scores.
-`judge.py` recomputes precision, recall, F2, EMR, the tool score, and total score
-in Python. Judge-provided arithmetic is not trusted.
+The LLM judge reports indexed semantic match pairs and the two rubric scores.
+`judge.py` validates one-to-one match indices and recomputes precision, recall,
+F2, EMR, the tool score, and total score in Python. Judge-provided arithmetic is
+not trusted. Inference traces retain structured tool results and accumulated
+tool feedback so answer and reasoning scores can be audited against actual
+evidence.
 
 ## Fixed MCP tool set
 

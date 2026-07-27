@@ -36,21 +36,29 @@ Usage
 
 import os
 import re
+import base64
 import json
+import mimetypes
 import time
 import glob
-import base64
 import argparse
 import traceback
 from typing import List, Dict, Any, Tuple, Optional
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+except ImportError:  # pragma: no cover
+    def tqdm(iterable, **_kwargs):
+        return iterable
 
 # optional imports (lazy)
 _QWEN_AVAILABLE = False
 _OPENAI_AVAILABLE = False
 
 try:
-    from qwen3vl import Qwen3VLClient  # pip install qwen3vl (your client)
+    try:
+        from .qwen3vl import Qwen3VLClient
+    except ImportError:
+        from qwen3vl import Qwen3VLClient
     _QWEN_AVAILABLE = True
 except Exception:
     pass
@@ -151,16 +159,18 @@ class OpenAIBackend(BaseClient):
     def paths_to_image_contents(paths: List[str]) -> List[Dict[str, Any]]:
         contents = []
         for p in paths:
-            if isinstance(p, str) and re.match(r"^https?://", p):
-                # remote URL
-                contents.append({"type": "image_url", "image_url": {"url": p}})
-            elif isinstance(p, str) and os.path.exists(p):
-                # local file: encode as base64
-                with open(p, "rb") as f:
-                    b64 = base64.b64encode(f.read()).decode("utf-8")
-                ext = os.path.splitext(p)[-1].lower()
-                mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "gif": "image/gif"}.get(ext.lstrip("."), "image/jpeg")
-                contents.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
+            if not isinstance(p, str):
+                continue
+            if re.match(r"^(?:https?://|data:)", p):
+                url = p
+            elif os.path.exists(p):
+                mime_type = mimetypes.guess_type(p)[0] or "image/jpeg"
+                with open(p, "rb") as image_file:
+                    encoded = base64.b64encode(image_file.read()).decode("utf-8")
+                url = f"data:{mime_type};base64,{encoded}"
+            else:
+                raise FileNotFoundError(f"image not found: {p}")
+            contents.append({"type": "image_url", "image_url": {"url": url}})
         return contents
 
     def chat_with_memory(
@@ -168,7 +178,7 @@ class OpenAIBackend(BaseClient):
         image_paths: List[str],
         text: str,
         messages: List[Dict[str, Any]],
-        timeout: float = 600.0,
+        timeout: float = 120.0,
     ) -> str:
         # Convert our message schema to OpenAI's
         # Flatten each message["content"] list into a single list for multimodal
@@ -197,7 +207,6 @@ class OpenAIBackend(BaseClient):
             model=self.model,
             messages=converted_messages,
             timeout=timeout,
-            max_tokens=4096,
         )
         # robust extract
         try:
@@ -237,8 +246,6 @@ def chat_with_memory(
             all_results.append({"turn_id": turn.get("turn_id", None), "answer": ""})
             continue
 
-        messages.append(build_user_message(q))
-
         # retry loop
         answer = ""
         last_err = None
@@ -255,9 +262,10 @@ def chat_with_memory(
             log(f"[WARN] turn_id={turn.get('turn_id')} generation failed: {last_err}")
             answer = "（生成失败）"
 
-        # record + extend memory
+        # record + extend memory exactly once
         turn["model_answer"] = answer
         all_results.append({"turn_id": turn.get("turn_id"), "answer": answer})
+        messages.append(build_user_message(q))
         messages.append(build_assistant_message(answer))
 
     return turns, all_results
@@ -292,7 +300,6 @@ def process_file(
             turns, results = chat_with_memory(client, turns, image_paths)
             sample["turns"] = turns
             fout.write(json.dumps(sample, ensure_ascii=False) + "\n")
-            fout.flush()
 
     # atomic move
     os.replace(tmp_out, out_path)

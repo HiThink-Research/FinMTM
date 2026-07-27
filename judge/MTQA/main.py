@@ -6,10 +6,9 @@ import glob
 import argparse
 import asyncio
 
-import config
-from io_utils import ensure_dir
-from client.factory import build_client
-from evaluator import run_file
+from . import config
+from .evaluator import run_file
+from .io_utils import ensure_dir
 
 
 def main():
@@ -17,16 +16,23 @@ def main():
     parser.add_argument(
         "--dirs",
         nargs="+",
-        default=config.DEFAULT_DIRS,
+        required=True,
         help="包含 L*_with_id_vlm.jsonl 的目录列表（空格分隔）",
     )
     parser.add_argument("--pattern", default=config.DEFAULT_PATTERN, help="输入文件 glob pattern")
     parser.add_argument("--out_subdir", default=config.DEFAULT_OUT_SUBDIR, help="输出子目录名")
-    parser.add_argument("--client", default="qwen", choices=["qwen", "gemini"], help="评测客户端")
+    parser.add_argument(
+        "--client",
+        default="qwen",
+        choices=["qwen", "openai"],
+        help="评测客户端",
+    )
     parser.add_argument("--api_base", default=config.DEFAULT_API_BASE, help="Qwen API base")
     parser.add_argument("--model", default=config.DEFAULT_MODEL, help="Qwen model name")
 
     args = parser.parse_args()
+
+    from .client.factory import build_client
 
     eval_client = build_client(args.client, api_base=args.api_base, model=args.model)
 

@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import traceback
-from context_utils import build_context
-from json_utils import safe_parse_json
+
+from finmtm_eval.metrics import CAPABILITIES, clamp, turn_capability_score
+
+from ..context_utils import build_context
+from ..json_utils import safe_parse_json
 
 async def judge_financial_turn(client, turn, all_turns, idx, image_paths):
     """
@@ -52,12 +55,6 @@ You apply **Institutional-Grade Standards**. In finance, a decimal error or a ha
 - 5: vague timeline
 - 10: pinpoint timing
 
-**Overall Score (综合加权)**
-- 1-5: unusable
-- 6-7: intern
-- 8-9: reliable
-- 10: flawless
-
 ---
 ### 2. Evaluation Context
 User Query: {q}
@@ -73,7 +70,6 @@ Conversation History: {ctx_text}
   "Data_Accuracy": 1-10,
   "Cross_Modal_Verification": 1-10,
   "Temporal_Awareness": 1-10,
-  "Overall_Score": 1-10,
   "Comment": "Specific critique."
 }}
 """.strip()
@@ -83,7 +79,17 @@ Conversation History: {ctx_text}
     try:
         resp = client.chat(image=image_uri, text=str(meta_prompt))
         resp_json = safe_parse_json(resp)
-        score = float(resp_json.get("Overall_Score", 0) or 0)
+        aliases = {
+            "visual_precision": "Visual_Precision",
+            "financial_logic": "Financial_Logic",
+            "data_accuracy": "Data_Accuracy",
+            "cross_modal_verification": "Cross_Modal_Verification",
+            "temporal_awareness": "Temporal_Awareness",
+        }
+        capability_scores = {
+            name: resp_json.get(field, 0.0) for name, field in aliases.items()
+        }
+        score = turn_capability_score(capability_scores)
     except Exception as e:
         traceback.print_exc()
         return {"score": 0.0, "comment": f"Error: {e}", "details": {}}
@@ -93,5 +99,9 @@ Conversation History: {ctx_text}
         "question": q,
         "score": score,
         "comment": resp_json.get("Comment", ""),
+        "capability_scores": {
+            name: clamp(capability_scores[name], 0.0, 10.0)
+            for name in CAPABILITIES
+        },
         "details": resp_json,
     }

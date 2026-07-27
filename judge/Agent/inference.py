@@ -14,7 +14,7 @@ from .agent import MultiRoundAgent
 
 async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, logger):
     if os.path.exists(output_file):
-        logger.warning(f"⚠️ 输出文件 {output_file} 已存在，新结果将追加。")
+        logger.warning(f"输出文件 {output_file} 已存在，将被覆盖。")
 
     async with AsyncExitStack() as stack:
         _session = None
@@ -40,7 +40,7 @@ async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, lo
 
         logger.info(f"🚀 开始批量处理 {len(lines)} 条样本...")
 
-        async with aiofiles.open(output_file, "a", encoding="utf-8") as fout:
+        async with aiofiles.open(output_file, "w", encoding="utf-8") as fout:
             for idx, line in enumerate(lines, 1):
                 if not line.strip():
                     continue
@@ -75,7 +75,7 @@ async def run_inference_pipeline(input_file: str, output_file: str, llm: Any, lo
                     }
 
                 record = {
-                    "sample_id": idx,
+                    "sample_id": item.get("sample_id", idx),
                     "question": question,
                     "image_path": image_path,
 

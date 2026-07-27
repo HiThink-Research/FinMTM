@@ -1,8 +1,20 @@
 import json
 import os
-from tqdm import tqdm
-from qwen3vl import Qwen3VLClient
+import argparse
+import sys
+from pathlib import Path
 
+try:
+    from tqdm import tqdm
+except ImportError:  # pragma: no cover
+    def tqdm(iterable, **_kwargs):
+        return iterable
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from finmtm_eval.metrics import objective_set_score
 
 # ------------------------------------------
 # 抽取文本 + 图片
@@ -12,8 +24,6 @@ from qwen3vl import Qwen3VLClient
 
 
 def extract_text_and_images(messages):
-    if not messages or not messages[0].get("content"):
-        return "", []
     contents = messages[0]["content"]
     txt = ""
     images = []
@@ -24,6 +34,7 @@ def extract_text_and_images(messages):
         elif part["type"] == "image_url":
             url = part["image_url"]["url"]
             images.append(url)
+    # txt+="\n 注意：不要输出<|begin_of_box|> <|end_of_box|>"
     return txt, images
 
 import re
@@ -42,6 +53,8 @@ def strip_box_markers(text: str) -> str:
 # ------------------------------------------
 def parse_model_answer(answer_str):
     """返回 ['A'] 或 ['A','C']，解析失败返回 []"""
+    # print(answer_str)
+
     if not answer_str:
         return []
 
@@ -52,28 +65,19 @@ def parse_model_answer(answer_str):
 
     s = s.replace("\\\"", "\"")
 
-    # --- 尝试解析 JSON 格式 {"answer": "A"} 或 {"answer": ["A","C"]} ---
     try:
         obj = json.loads(s)
         ans = obj.get("answer", None)
-        if isinstance(ans, str):
-            return [ans]
-        if isinstance(ans, list):
-            return ans
     except Exception:
-        pass
-
-    # --- 回退：裸字母或逗号分隔列表，如 "A" / "A,B,C" / "ABC" ---
-    # 去掉首尾空白，优先按逗号分隔，否则按字符逐个分割（过滤非字母）
-    fallback = s.strip().strip("'\"").strip()
-    if not fallback:
         return []
-    if "," in fallback:
-        parts = [p.strip().strip("'\"") for p in fallback.split(",")]
-        return [p for p in parts if p]
-    # 单个字母或连续字母视为选项列表
-    letters = re.findall(r"[A-Za-z]", fallback)
-    return letters if letters else []
+
+    # --- 标准化输出 ---
+    if isinstance(ans, str):
+        return [ans]
+    if isinstance(ans, list):
+        return ans
+
+    return []
 
 
 # ------------------------------------------
@@ -95,10 +99,16 @@ def get_ground_truth(record):
 
 
 # ------------------------------------------
-# 判定是否正确
+# 论文公式 (1)：禁止过选，否则按正确选项覆盖率给部分分
 # ------------------------------------------
+def score_answer(pred_list, gt_list):
+    return objective_set_score(pred_list, gt_list)
+
+
 def is_correct(pred_list, gt_list):
-    return set(pred_list) == set(gt_list)
+    """Backward-compatible exact-correct flag derived from Equation (1)."""
+
+    return score_answer(pred_list, gt_list) == 1.0
 
 
 
@@ -110,15 +120,22 @@ def evaluate_jsonl_with_accuracy(
     output_jsonl="eval_results.jsonl",
     summary_json="eval_summary.json",
     api_base="http://localhost:8000/v1",
-    model="Qwen3-VL-30B-A3B-Instruct"
+    model="Qwen3-VL-30B-A3B-Instruct",
+    image_root=None,
 ):
+    try:
+        from .qwen3vl import Qwen3VLClient
+    except ImportError:
+        from qwen3vl import Qwen3VLClient
 
     client = Qwen3VLClient(api_base=api_base, model=model)
 
     total = 0
     correct = 0
+    score_sum = 0.0
 
-    os.makedirs(os.path.dirname(output_jsonl), exist_ok=True)
+    Path(output_jsonl).parent.mkdir(parents=True, exist_ok=True)
+    Path(summary_json).parent.mkdir(parents=True, exist_ok=True)
 
     with open(input_jsonl, "r", encoding="utf-8") as fin, \
          open(output_jsonl, "w", encoding="utf-8") as fout:
@@ -129,21 +146,22 @@ def evaluate_jsonl_with_accuracy(
 
             # -------- 1) 抽取题干 + 图片 --------
             text, images = extract_text_and_images(record["messages"])
-            
+
 
             # print(text)
-         
+
             real_images = []
             for img in images:
                 if os.path.exists(img):
                     real_images.append(img)
-                else:
-                    # 拼接你的默认图片目录
-                    path2 = f"/mnt/HithinkOmni/user_workspace/zhangchenxi4/MMfin/gemi/chinese/output/images/{img}"
+                elif image_root:
+                    path2 = os.path.join(image_root, img)
                     if os.path.exists(path2):
                         real_images.append(path2)
                     else:
                         real_images.append(img)
+                else:
+                    real_images.append(img)
 
             # -------- 2) 调模型 --------
             try:
@@ -156,9 +174,9 @@ def evaluate_jsonl_with_accuracy(
                 pred_str = f"[ERROR]{e}"
 
             # -------- 3) 解析预测 --------
-           
+
             pred_str = pred_str.replace("```json", "").replace("```", "").strip()
-           
+
             pred_str = strip_box_markers(pred_str)
             print(pred_str)
             pred_ans = parse_model_answer(pred_str)
@@ -167,8 +185,10 @@ def evaluate_jsonl_with_accuracy(
             gt_ans = get_ground_truth(record)
             print(pred_ans,gt_ans)
 
-            # -------- 5) 判对 --------
-            hit = is_correct(pred_ans, gt_ans)
+            # -------- 5) 论文公式 (1) 评分 --------
+            item_score = score_answer(pred_ans, gt_ans)
+            hit = item_score == 1.0
+            score_sum += item_score
             if hit:
                 correct += 1
 
@@ -179,6 +199,7 @@ def evaluate_jsonl_with_accuracy(
                 "gt_answer": gt_ans,
                 "model_answer_raw": pred_str,
                 "model_answer": pred_ans,
+                "score": item_score,
                 "correct": hit
             }
             fout.write(json.dumps(out, ensure_ascii=False) + "\n")
@@ -187,11 +208,14 @@ def evaluate_jsonl_with_accuracy(
     # 统计
     # -----------------------------------
     acc = correct / total if total else 0
+    mean_score = score_sum / total if total else 0
 
     summary = {
         "total": total,
         "correct": correct,
-        "accuracy": acc
+        "accuracy": acc,
+        "mean_score": mean_score,
+        "score_percent": mean_score * 100.0,
     }
 
     with open(summary_json, "w", encoding="utf-8") as f:
@@ -201,6 +225,8 @@ def evaluate_jsonl_with_accuracy(
     print("Total:", total)
     print("Correct:", correct)
     print("Accuracy:", f"{acc:.4f}")
+    print("Mean Eq.(1) score:", f"{mean_score:.4f}")
+    print("Reported score:", f"{mean_score * 100.0:.2f}")
     print("结果保存到:", output_jsonl)
     print("统计保存到:", summary_json)
 
@@ -209,12 +235,30 @@ def evaluate_jsonl_with_accuracy(
 # ------------------------------------------
 # main
 # ------------------------------------------
-if __name__ == "__main__":
-    input_jsonl = "/cpfs01/HithinkOmniSSD/user_workspace/ganziliang/code/omini/OQ/output.jsonl"
-
-    evaluate_jsonl_with_accuracy(
-        input_jsonl=input_jsonl,
-        output_jsonl="/cpfs01/HithinkOmniSSD/user_workspace/ganziliang/code/omini/OQ/Qwen3/choice/eval_results_s.jsonl",
-        summary_json="/cpfs01/HithinkOmniSSD/user_workspace/ganziliang/code/omini/OQ/Qwen3/choice/eval_summary_s.json",
-        model="Qwen3-VL-30B-A3B-Instruct"
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run objective-question inference and paper-aligned evaluation."
     )
+    parser.add_argument("--input", required=True, help="Input JSONL")
+    parser.add_argument("--output", default="outputs/objective_eval_results.jsonl")
+    parser.add_argument("--summary", default="outputs/objective_eval_summary.json")
+    parser.add_argument("--api-base", default="http://localhost:8000/v1")
+    parser.add_argument("--model", default="Qwen3-VL-30B-A3B-Instruct")
+    parser.add_argument(
+        "--image-root",
+        default=None,
+        help="Optional base directory for relative image paths",
+    )
+    args = parser.parse_args()
+    evaluate_jsonl_with_accuracy(
+        input_jsonl=args.input,
+        output_jsonl=args.output,
+        summary_json=args.summary,
+        api_base=args.api_base,
+        model=args.model,
+        image_root=args.image_root,
+    )
+
+
+if __name__ == "__main__":
+    main()

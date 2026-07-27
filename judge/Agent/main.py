@@ -1,68 +1,113 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""CLI for financial-agent inference and evaluation."""
+
+from __future__ import annotations
 
 import argparse
 import asyncio
 import datetime
 from pathlib import Path
 
-from .config import DEFAULT_INPUT_FILE
+from . import config
+from .judge import run_evaluation_pipeline
 from .logging import setup_logger
 from .utils import safe_name
-from .model import build_models
-from .inference import run_inference_pipeline
-from .judge import run_evaluation_pipeline
+
 
 logger = setup_logger()
 
-async def run_one_model(mode: str, input_path: str, out_dir: Path, llm_obj, judge_obj):
-    out_dir.mkdir(parents=True, exist_ok=True)
-    trace_path = out_dir / "trace.jsonl"
-    score_path = out_dir / "score.jsonl"
+
+async def run_pipeline(
+    mode: str,
+    input_path: str,
+    output_dir: Path,
+    model_client,
+    judge_client,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    trace_path = (
+        Path(input_path) if mode == "eval" else output_dir / "trace.jsonl"
+    )
+    score_path = output_dir / "score.jsonl"
 
     if mode in ("all", "inference"):
-        await run_inference_pipeline(input_path, str(trace_path), llm=llm_obj, logger=logger)
+        from .inference import run_inference_pipeline
 
+        await run_inference_pipeline(
+            input_path,
+            str(trace_path),
+            llm=model_client,
+            logger=logger,
+        )
     if mode in ("all", "eval"):
         if not trace_path.exists():
-            logger.error(f"❌ 找不到推理结果文件 {trace_path}，无法进行评分。")
-            return
-        await run_evaluation_pipeline(str(trace_path), str(score_path), judge_client=judge_obj, logger=logger)
+            raise FileNotFoundError(
+                f"trace file is required for evaluation: {trace_path}"
+            )
+        await run_evaluation_pipeline(
+            str(trace_path),
+            str(score_path),
+            judge_client=judge_client,
+            logger=logger,
+        )
 
-def cli():
-    parser = argparse.ArgumentParser(description="Agent Inference & Evaluation Pipeline (Multi-Model)")
-    parser.add_argument("--mode", type=str, default="all", choices=["all", "inference", "eval"], help="运行模式")
-    parser.add_argument("--input", type=str, default=DEFAULT_INPUT_FILE, help="原始输入数据")
-    parser.add_argument("--out_root", type=str, default="/mnt/HithinkOmni/user_workspace/zhangchenxi4/omini/eval/agent_val/out", help="输出根目录 (每个模型一个子目录)")
-    parser.add_argument("--with_ts", action="store_true", help="输出目录添加时间戳")
-    parser.add_argument("--models", type=str, default="gpt5,gemini", help="只跑指定模型key，逗号分隔；空=全跑")
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="FinMTM financial-agent inference and evaluation"
+    )
+    parser.add_argument(
+        "--mode",
+        default="all",
+        choices=["all", "inference", "eval"],
+    )
+    parser.add_argument("--input", required=True, help="Input agent JSONL")
+    parser.add_argument("--out-root", default="outputs/agent")
+    parser.add_argument("--with-timestamp", action="store_true")
+    parser.add_argument("--api-base", default="http://localhost:8000/v1")
+    parser.add_argument("--model", default="Qwen3-VL-30B-A3B-Instruct")
+    parser.add_argument("--api-key", default=None)
+    parser.add_argument("--judge-api-base", default=None)
+    parser.add_argument("--judge-model", default=None)
+    parser.add_argument("--judge-api-key", default=None)
+    parser.add_argument("--mcp-url", default=config.MCP_SERVER_URL)
     return parser.parse_args()
 
-def main():
-    args = cli()
-    models = build_models()
 
-    if args.models.strip():
-        allow = {m.strip() for m in args.models.split(",") if m.strip()}
-        models = [m for m in models if m["key"] in allow]
+def main() -> None:
+    args = parse_args()
+    from .model import build_model
 
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") if args.with_ts else ""
-    out_root = Path(args.out_root)
+    config.MCP_SERVER_URL = args.mcp_url
+    model_client = build_model(
+        api_base=args.api_base,
+        model=args.model,
+        api_key=args.api_key,
+    )
+    judge_client = build_model(
+        api_base=args.judge_api_base or args.api_base,
+        model=args.judge_model or args.model,
+        api_key=args.judge_api_key or args.api_key,
+    )
 
-    # judge 默认用 gemini（你也可以改成跟随某个 key）
-    # 这里简单做成：固定 GEMINIClient() 做 judge
-    from api2 import GEMINIClient
-    judge_obj = GEMINIClient()
+    timestamp = (
+        datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        if args.with_timestamp
+        else ""
+    )
+    tag = safe_name(args.model)
+    output_name = f"{tag}_{timestamp}" if timestamp else tag
+    output_dir = Path(args.out_root) / output_name
+    asyncio.run(
+        run_pipeline(
+            args.mode,
+            args.input,
+            output_dir,
+            model_client,
+            judge_client,
+        )
+    )
 
-    for m in models:
-        tag = safe_name(m["key"])
-        out_dir = out_root / (f"{tag}_{ts}" if ts else tag)
-        logger.info(f"🚀 Running model={m.get('display', m['key'])}, out_dir={out_dir}")
-
-        # 每个模型一个 event loop：最稳
-        asyncio.run(run_one_model(args.mode, args.input, out_dir, m["obj"], judge_obj))
-
-    logger.info("✅ All done.")
 
 if __name__ == "__main__":
     main()

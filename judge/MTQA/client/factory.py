@@ -1,16 +1,15 @@
-# eval_runner/clients/factory.py
-# -*- coding: utf-8 -*-
+"""Evaluator-client factory."""
 
-from qwen3vl import Qwen3VLClient
-from api2 import GEMINIClient
+from .qwen3vl import Qwen3VLClient
+
 
 def build_client(kind: str, api_base: str = None, model: str = None):
-    """
-    kind: "qwen" or "gemini"
-    """
-    kind = (kind or "").lower().strip()
-    if kind == "gemini":
-        return GEMINIClient()
+    """Build a client for an OpenAI-compatible multimodal endpoint."""
 
-    # 默认 qwen
+    kind = (kind or "").lower().strip()
+    if kind not in {"qwen", "openai"}:
+        raise ValueError(
+            "Supported public adapters are 'qwen' and 'openai'; both use an "
+            "OpenAI-compatible multimodal endpoint."
+        )
     return Qwen3VLClient(api_base=api_base, model=model)

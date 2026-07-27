@@ -1,140 +1,163 @@
-# eval_runner/evaluator.py
-# -*- coding: utf-8 -*-
+"""Paper-aligned open-ended dialogue evaluator."""
+
+from __future__ import annotations
 
 import json
 import os
 import re
 import traceback
-from tqdm import tqdm
+from typing import Any
 
-import config
-from io_utils import load_jsonl, ensure_dir
-from judge.turn_judge import judge_financial_turn
-from judge.session_judge import (
-    judge_session_behavior,
-    judge_session_v2,
-    judge_session_multiview,
-    judge_session_logic_reasoning,
-    judge_session_L1
-)
+try:
+    from tqdm import tqdm
+except ImportError:  # pragma: no cover - exercised only in minimal installs
+    def tqdm(iterable, **_kwargs):
+        return iterable
 
+from finmtm_eval.metrics import CAPABILITIES, dialogue_score
 
-def detect_multiview(task_type_hint: str, image_paths):
-    # 不要把“单页”当 multiview；multiview 以多图/研报/Multi 为准
-    return (
-        (len(image_paths) > 1)
-        or ("研报" in (task_type_hint or ""))
-        or ("Multi" in (task_type_hint or ""))
-    )
+from .io_utils import ensure_dir, load_jsonl
+from .judge.session_judge import judge_session
+from .judge.turn_judge import judge_financial_turn
 
 
-async def evaluate_sample(sample, eval_client,task):
+LEVEL_ALIASES = {
+    "L1": "L1",
+    "COM": "L1",
+    "COMPREHENSION": "L1",
+    "L2": "L2",
+    "CAL": "L2",
+    "CALCULATION": "L2",
+    "L3": "L3",
+    "SELFCORR": "L3",
+    "SELF-CORRECTION": "L3",
+    "SELF_CORRECTION": "L3",
+    "L4": "L4",
+    "MEM": "L4",
+    "MEMORY": "L4",
+}
+
+
+def _normalise_images(sample: dict[str, Any]) -> list[str]:
+    image_paths = sample.get("image_paths") or sample.get("image_path") or []
+    if not isinstance(image_paths, list):
+        image_paths = [image_paths]
+    return [path for path in image_paths if path]
+
+
+def level_from_sample(sample: dict[str, Any], fallback: str | None = None) -> str:
+    """Read the session-level task label, falling back to the file label."""
+
+    candidates = [
+        sample.get("level"),
+        sample.get("task_type"),
+        sample.get("task"),
+        fallback,
+    ]
+    for candidate in candidates:
+        key = str(candidate or "").strip().upper()
+        if key in LEVEL_ALIASES:
+            return LEVEL_ALIASES[key]
+        match = re.search(r"(?:^|[^A-Z0-9])(L[1-4])(?:[^A-Z0-9]|$)", key)
+        if match:
+            return match.group(1)
+    raise ValueError("sample is missing a valid L1-L4 session label")
+
+
+async def evaluate_sample(
+    sample: dict[str, Any],
+    eval_client: Any,
+    task: str | None = None,
+) -> dict[str, Any]:
     turns = sample.get("turns", [])
-    if not turns:
-        turns = []
+    image_paths = _normalise_images(sample)
+    level = level_from_sample(sample, fallback=task)
 
-    raw_paths = sample.get("image_paths") or sample.get("image_path")
-    if isinstance(raw_paths, list):
-        image_paths = [p for p in raw_paths if p]
-    elif raw_paths:
-        image_paths = [raw_paths]
-    else:
-        image_paths = []
-
-    # --- 1) Turn-Level ---
     turn_results = []
-    for idx, turn in enumerate(turns):
-        res = await judge_financial_turn(eval_client, turn, turns, idx, image_paths)
-        turn_results.append(res)
-
-    avg_turn_score = (
-        sum(x["score"] for x in turn_results) / len(turn_results)
-        if turn_results else 0.0
-    )
-
-    # --- 2) Session-Level (branch) ---
-    task_type_hint = str(sample.get("task_type", "")) + str(turns[0].get("task_type", "") if turns else "")
-    num_turns = len(turns)
-    is_multiview = detect_multiview(task_type_hint, image_paths)
-
-    session_eval_res = {}
-    session_score = 0.0
-    final_score = None
-
-    if is_multiview:
-        session_eval_res = await judge_session_multiview(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
-        citation_score = float(session_eval_res.get("Format_Citation_Score", 0) or 0)
-
-        if citation_score < config.CITATION_FAIL_TH:
-            final_score = avg_turn_score * config.PENALTY_MULT
-        else:
-            final_score = (avg_turn_score * 0.4) + (session_score * 0.6)
-
-    elif num_turns == 5:
-        session_eval_res = await judge_session_behavior(
-            eval_client, sample,
-            image_paths[0] if image_paths else None
+    for index, turn in enumerate(turns):
+        result = await judge_financial_turn(
+            eval_client,
+            turn,
+            turns,
+            index,
+            image_paths,
         )
-        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
-        robustness = float(session_eval_res.get("T3_Robustness_Score", 0) or 0)
+        turn_results.append(result)
 
-        if robustness < config.ROBUSTNESS_FAIL_TH:
-            final_score = avg_turn_score * config.PENALTY_MULT
-        else:
-            final_score = (avg_turn_score * 0.4) + (session_score * 0.6)
+    turn_score = (
+        sum(item["score"] for item in turn_results) / len(turn_results)
+        if turn_results
+        else 0.0
+    )
+    session_result = await judge_session(
+        eval_client,
+        sample,
+        image_paths,
+        level,
+    )
+    session_score = float(session_result.get("Overall_Score", 0.0) or 0.0)
 
-    elif task=="L1":
-        session_eval_res = await judge_session_L1(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
-        final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
-    elif task=="L2":
-        session_eval_res = await judge_session_logic_reasoning(eval_client, sample, image_paths)
-        session_score = float(session_eval_res.get("Overall_Score") or session_eval_res.get("Score") or 0)
-        final_score = (avg_turn_score * 0.5) + (session_score * 0.5)
-        
-    # --- 3) fallback（理论上不会走到） ---
-    if final_score is None:
-        final_score = (avg_turn_score * config.WEIGHT_TURN) + (session_score * config.WEIGHT_SESSION)
+    capability_means = {}
+    for capability in CAPABILITIES:
+        values = [
+            item.get("capability_scores", {}).get(capability, 0.0)
+            for item in turn_results
+        ]
+        capability_means[capability] = (
+            sum(values) / len(values) if values else 0.0
+        )
 
+    final_score = dialogue_score(
+        turn_score,
+        session_score,
+        alpha=0.5,
+        report_scale=100.0,
+    )
     return {
+        "sample_id": sample.get("sample_id") or sample.get("session_id"),
         "image_path": sample.get("image_path"),
-        "final_composite_score": round(float(final_score or 0), 2),
-        "avg_turn_score": round(float(avg_turn_score or 0), 2),
-        "session_structure_score": float(session_score or 0),
-        "is_pass": bool(session_eval_res.get("Pass", False)),
-        "session_critique": session_eval_res.get("Critique", ""),
+        "task_level": level,
+        "score_scale": "0-100",
+        "final_composite_score": round(final_score, 2),
+        "avg_turn_score_0_10": round(turn_score, 4),
+        "session_score_0_10": round(session_score, 4),
+        "capability_scores_0_100": {
+            name: round(value * 10.0, 2)
+            for name, value in capability_means.items()
+        },
+        "is_pass": bool(session_result.get("Pass", False)),
+        "session_critique": session_result.get("Critique", ""),
         "turn_details": turn_results,
-        "session_details": session_eval_res,
+        "session_details": session_result,
     }
 
 
 def level_from_input_path(input_path: str) -> str:
-    """
-    从输入文件名提取 L1-L4。
-    例如：.../L1_with_id_vlm.jsonl -> L1
-         .../abc_L2__with_id_vlm.jsonl -> L2
-    """
-    fname = os.path.basename(input_path).upper()
-    m = re.search(r"\bL[1-4]\b", fname)
-    if not m:
-        raise ValueError(f"无法从文件名解析 L1-L4: {fname}")
-    return m.group(0)
+    filename = os.path.basename(input_path).upper()
+    match = re.search(r"(?:^|[^A-Z0-9])(L[1-4])(?:[^A-Z0-9]|$)", filename)
+    if not match:
+        raise ValueError(f"cannot infer L1-L4 from filename: {filename}")
+    return match.group(1)
 
-async def run_file(input_path, output_path, eval_client):
+
+async def run_file(input_path: str, output_path: str, eval_client: Any):
     samples = load_jsonl(input_path)
-    task=level_from_input_path(input_path)
-    print(f"📂 Load {len(samples)} samples from {input_path}")
+    fallback_level = level_from_input_path(input_path)
+    print(f"Load {len(samples)} samples from {input_path}")
     ensure_dir(output_path)
 
-    with open(output_path, "a", encoding="utf-8") as fout:
-        for sample in tqdm(samples, desc=f"🚀 Evaluating {input_path}"):
+    with open(output_path, "w", encoding="utf-8") as output:
+        for sample in tqdm(samples, desc=f"Evaluating {input_path}"):
             try:
-                result = await evaluate_sample(sample, eval_client,task)
-                fout.write(json.dumps(result, ensure_ascii=False) + "\n")
-                fout.flush()
-            except Exception as e:
-                print(f"⚠️ Sample failed: {e}")
+                result = await evaluate_sample(
+                    sample,
+                    eval_client,
+                    fallback_level,
+                )
+                output.write(json.dumps(result, ensure_ascii=False) + "\n")
+                output.flush()
+            except Exception as exc:
+                print(f"Sample failed: {exc}")
                 traceback.print_exc()
 
-    print(f"✅ Done. Saved to {output_path}")
+    print(f"Done. Saved to {output_path}")

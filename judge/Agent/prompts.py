@@ -1,149 +1,125 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Inference and judge prompts for the paper-aligned Agent protocol."""
+
+from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any
+
 
 def agent_sys_prompt(query: str) -> str:
-    # 你原来 sys prompt 的内容（我保持原意）
     return f"""
-你是一名**金融多轮分析 Agent**，需要逐步规划 MCP 工具调用，并结合图像中的信息完成任务。
-问题是：{query}
-你先找到这个公司是哪家，
-严禁使用你自己的工具查阅信息，下面是我给的工具，你给我说ActionTrace，我会自己执行。
----
-### 可使用的工具
-1. **FinQuery**: 金融数据查询 (股价、涨跌幅、财务数据等)。
-2. **Search**: 通用搜索 (新闻、概念)。
-3. **StockNews**: 财经新闻检索。
-4. **ReportQuery**: 研报观点查询。
+你是一名金融多轮分析 Agent，需要逐步规划 MCP 工具调用，并结合图像信息完成任务。
+问题：{query}
 
----
-### 输出格式要求,tool 不要有 若上条无结果，每次查询的内容不要太复杂
-请仅输出一个 JSON 对象，包含以下 4 个字段：
+只能使用以下固定 MCP 工具；系统会执行 ActionTrace 并返回结果。
+
+可用工具：
+1. FinQuery：市场价格、估值指标、交易统计和基本面数据。
+2. StockNews：实时股票新闻检索。
+3. AnalysisLib：结构化金融分析。
+4. NoticeSearch：公司公告、披露和备案文件检索。
+5. VisitWeb：解析给定网页 URL 的正文。
+
+每轮仅输出一个 JSON 对象：
 {{
-  "Thought": "你对任务的总体思考、推理步骤。",
-  "VisualObservation": ["你从图像中观察或识别到的金融关键信息"],
+  "Thought": "高层推理与下一步规划",
+  "VisualObservation": ["从图像中获得的证据"],
   "ActionTrace": [
-    {{"tool": "FinQuery", "query": "查询xxx"}},
-    {{"tool": "Search", "query": "查询xxx"}}
+    {{"tool": "FinQuery", "query": "包含公司、指标和时间范围的查询"}}
   ]
 }}
 
+不要重复已经成功执行的调用。允许采用任意有效规划顺序。
 若任务完成，请输出 <FINISHED> 并总结最终结论。
 """.strip()
 
-def build_agent_eval_prompt(sample: Dict[str, Any]) -> str:
-    """
-    你的新版 Judge Prompt（含 Tool F1 / EMR / 0-50 Answer / 0-25 Reasoning）
-    """
+
+def build_agent_eval_prompt(sample: dict[str, Any]) -> str:
+    """Build the paper-aligned financial-agent judge prompt."""
+
     question = sample.get("question", "")
     model_answer = sample.get("model_final_answer", "")
-    ref_answer = sample.get("reference_gold_answer", "")
-
+    reference_answer = sample.get("reference_gold_answer", "")
     model_visual = sample.get("model_visual_observation", "")
-    ref_visual = sample.get("reference_visual_observation", "")
-
+    reference_visual = sample.get("reference_visual_observation", "")
     model_tools = sample.get("model_tool_calls", [])
-    ref_tools = sample.get("reference_tool_calls", [])
-
+    reference_tools = sample.get("reference_tool_calls", [])
     model_thought = sample.get("model_thought", "")
-    ref_thought = sample.get("reference_thought", "")
+    reference_thought = sample.get("reference_thought", "")
 
-    meta_prompt = f"""
-你是一名专业的金融 Agent 评测专家。你的任务是对模型的行为进行严格量化打分。
+    return f"""
+你是一名专业的金融 Agent 评测专家。请依据图像证据、实际工具返回信息和标准答案，
+对模型的答案、工具规划和推理进行评分。只输出 JSON。
 
-你会得到以下信息：
-- 题目（Question）
-- 模型与标准的视觉观察（Visual Observation）
-- 模型与标准的工具调用轨迹（Tool Calls）
-- 模型与标准的思考过程（Thought）
-- 最终回答（Final Answer）
+一、答案正确性 answer_score（0～50）
+这是分级评分，不是 0/50 二元评分。检查核心实体、数值、方向性结论和任务要求。
+语义等价的格式不得扣分，例如 12.45% 与 0.1245、公司名与明确股票代码、等价日期
+写法、单位换算和合理舍入。
 
-你需要输出详细的指标分数，并计算总分（满分 100 分）。
+评分锚点：
+- 45～50：核心答案完整正确，仅有不影响结论的轻微遗漏；
+- 35～44：主要结论正确，但存在次要遗漏或轻微数值偏差；
+- 20～34：部分关键点正确，但答案不完整或含实质性错误；
+- 1～19：仅有少量相关信息，核心结论错误或缺乏证据；
+- 0：完全错误、无关或没有作答。
 
-============================
-一、答案正确性评分（answer_score，满分 50）
-============================
-对比 model_final_answer 与 reference_gold_answer：
-1. 核心判定：实体识别正确（如公司名） 且 数值/结论准确（容许一定格式差异，如 12.45% vs 0.1245）。
-2. 评分规则：
-   - 若所有关键要点完全匹配：50 分
-   - 否则：0 分
+二、工具调用匹配
+参考轨迹是有效、效率导向的信息需求基线，不是唯一推理路径。你只需进行一对一语义
+匹配并报告 true_positives；评分代码将按论文公式计算 F2×25（β=2），并将 EMR
+作为诊断指标。
 
-============================
-二、工具调用评分（tool_score，满分 25）
-============================
-请根据以下定义计算指标，基于 Tool F1 计算得分。
+匹配规则：
+1. 将轨迹视为无序集合，不比较调用顺序。
+2. 同一个参考调用不能被重复计为多个 TP。
+3. 工具功能及核心参数（公司/股票、日期范围、指标或查询条件）必须与任务信息需求
+   语义一致。
+4. 功能等价、满足同一信息需求的调用可以匹配，不要求工具名字符串完全一致。
+5. 参数允许语义等价，例如“2024Q4”与“2024年第四季度”。
+6. predicted_count 和 reference_count 必须分别等于给定集合的大小。
 
-【定义】：
-- Reference Set (R): 标准答案中的工具调用集合。
-- Predicted Set (P): 模型输出的工具调用集合。
-- Correct Tool (Hit): 模型调用的工具，其 tool_name 和 核心参数(query/args) 与标准答案语义一致。
+三、推理质量 reasoning_score（0～25）
+评价推理是否连贯、是否由图像与实际工具返回结果支持，以及是否存在幻觉、逻辑断层
+或与工具证据矛盾。不得仅因推理顺序与参考轨迹不同而扣分。
 
-【指标计算】：
-1. Tool Recall (TR) = |P ∩ R| / |R|
-2. Tool Precision (TP) = |P ∩ R| / |P|
-3. Tool F1 (TF1) = (2 * TR * TP) / (TR + TP)，若 TR+TP=0，则 TF1=0
-4. Exact Match Rate (EMR) (0/1)：工具调用序列组织与参考序列完全一致则为 1 否则 0
-
-【最终工具得分】：
-- tool_score = round(TF1 * 25)
-
-注意：参数匹配允许语义等价（例如 "2024Q4" 与 "2024年第四季度"）。
-
-============================
-三、推理连贯性评分（reasoning_score，满分 25）
-============================
-先给出 raw_reason ∈ [0, 1]，再计算 reasoning_score = round(raw_reason * 25)。
-
-扣分项：
-- 幻觉/记忆错误：-0.2 ~ -0.3
-- 逻辑断层/跳步：-0.1
-- 与工具结果矛盾：-0.2
-
-============================
-四、输出格式
-============================
-请直接输出如下 JSON 格式，不要包含Markdown代码块标记：
-
+输出格式：
 {{
-  "answer_score": 0 或 50,
+  "answer_score": 0～50,
   "tool_metrics": {{
-      "recall": 0.0~1.0,
-      "precision": 0.0~1.0,
-      "f1": 0.0~1.0,
-      "emr": 0 或 1
+    "true_positives": 0,
+    "predicted_count": 0,
+    "reference_count": 0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f2": 0.0,
+    "emr": 0
   }},
-  "tool_score": 0~25,
-  "reasoning_score": 0~25,
-  "total_score": 0~100,
-  "answer_basis": "简短说明答案判定理由",
-  "tool_basis": "简短说明工具F1及EMR判定理由（指出哪个工具多余或缺失）",
-  "reasoning_basis": "简短说明推理打分理由"
+  "reasoning_score": 0～25,
+  "answer_basis": "答案评分依据",
+  "tool_basis": "语义匹配、多余及缺失的信息需求",
+  "reasoning_basis": "推理评分依据"
 }}
 
-============================
-待评测样本：
-============================
+题目：
+{question}
 
-【题目】: {question}
+模型最终回答：
+{model_answer}
 
-【模型最终回答】: {model_answer}
-【标准参考答案】: {ref_answer}
+标准参考答案：
+{reference_answer}
 
-【模型工具调用 (Predicted Set)】:
+模型工具调用（Predicted Set）：
 {json.dumps(model_tools, ensure_ascii=False, indent=2)}
 
-【标准工具调用 (Reference Set)】:
-{json.dumps(ref_tools, ensure_ascii=False, indent=2)}
+参考工具调用（Reference Set）：
+{json.dumps(reference_tools, ensure_ascii=False, indent=2)}
 
-【模型视觉与思考】:
+模型视觉观察与推理：
 Visual: {model_visual}
 Thought: {model_thought}
 
-【标准视觉与思考】:
-Visual: {ref_visual}
-Thought: {ref_thought}
-"""
-    return meta_prompt.strip()
+参考视觉观察与推理：
+Visual: {reference_visual}
+Thought: {reference_thought}
+""".strip()

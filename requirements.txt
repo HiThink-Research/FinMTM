@@ -1,8 +1,10 @@
+aiofiles
 decord
 gradio
 huggingface_hub
 imageio
 matplotlib
+mcp
 moviepy
 numpy>=1.23.4
 omegaconf
